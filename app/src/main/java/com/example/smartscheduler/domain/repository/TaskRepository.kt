@@ -8,7 +8,7 @@ import java.time.Period
 
 interface TaskRepository {
 
-    suspend fun getTasks(): List<Task>
+    suspend fun getUnallocatedTasks(): List<Task>
 
     suspend fun getTasks(startTime: LocalDateTime, endTime: LocalDateTime): List<Task>
 
@@ -17,8 +17,6 @@ interface TaskRepository {
     suspend fun deleteTask(taskId: String)
 
     suspend fun updateTask(task: Task)
-
-    suspend fun refreshTasks()
 
     fun getDayTasksStream(date: LocalDate): Flow<List<Task>>
 
