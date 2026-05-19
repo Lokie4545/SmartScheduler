@@ -12,11 +12,20 @@ interface EventDao {
         SELECT * FROM event
         WHERE startTime >= :startPeriod AND endTime <= :endPeriod
     """)
-    fun observeAllEvents(
+    fun observeEvents(
         startPeriod: Long,
         endPeriod: Long
     ): Flow<List<EventEntity>>
 
+
+    @Query("""
+        SELECT * FROM event
+        WHERE startTime >= :startPeriod AND endTime <= :endPeriod
+    """)
+    fun getEvents(
+        startPeriod: Long,
+        endPeriod: Long
+    ): List<EventEntity>
 
     @Upsert
     suspend fun upsertEvent(event: EventEntity)
