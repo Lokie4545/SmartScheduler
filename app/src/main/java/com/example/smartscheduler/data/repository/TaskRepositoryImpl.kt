@@ -32,6 +32,10 @@ class TaskRepositoryImpl @Inject constructor(
         ).map { it.toDomain() }
     }
 
+    override suspend fun applyReschedule(tasks: List<Task>) {
+        taskDao.upsertTasks(tasks.map { it.toEntity() })
+    }
+
     override suspend fun createTask(task: Task): String {
         taskDao.upsertTask(task.toEntity())
         return task.id

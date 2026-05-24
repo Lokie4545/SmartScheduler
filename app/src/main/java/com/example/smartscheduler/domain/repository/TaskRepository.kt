@@ -13,6 +13,8 @@ interface TaskRepository {
 
     suspend fun getTasks(startTime: LocalDateTime, endTime: LocalDateTime): List<Task>
 
+    suspend fun applyReschedule(tasks: List<Task>)
+
     suspend fun createTask(task: Task): String
 
     suspend fun deleteTask(taskId: String)

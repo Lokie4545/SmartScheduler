@@ -2,6 +2,8 @@ package com.example.smartscheduler.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import androidx.room.Upsert
 import com.example.smartscheduler.data.local.EventEntity
 import com.example.smartscheduler.data.local.TaskEntity
@@ -55,4 +57,7 @@ interface TaskDao {
 
     @Upsert
     suspend fun upsertTask(task: TaskEntity)
+
+    @Upsert
+    suspend fun upsertTasks(tasks: List<TaskEntity>)
 }
