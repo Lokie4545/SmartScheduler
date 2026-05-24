@@ -4,6 +4,7 @@ import com.example.smartscheduler.data.local.dao.TaskDao
 import com.example.smartscheduler.data.mapper.toDomain
 import com.example.smartscheduler.data.mapper.toEntity
 import com.example.smartscheduler.domain.model.Task
+import com.example.smartscheduler.domain.model.UnscheduledTask
 import com.example.smartscheduler.domain.repository.TaskRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -15,8 +16,9 @@ import javax.inject.Inject
 class TaskRepositoryImpl @Inject constructor(
     private val taskDao: TaskDao
 ) : TaskRepository {
-    override suspend fun getUnallocatedTasks(): List<Task> {
+    override suspend fun getUnallocatedTasks(): List<UnscheduledTask> {
         return taskDao.getUnallocatedTasks().map { it.toDomain() }
+            .filterIsInstance<UnscheduledTask>()
     }
 
     override suspend fun getTasks(
@@ -27,7 +29,7 @@ class TaskRepositoryImpl @Inject constructor(
         return taskDao.getTasks(
             startTime.toInstant(ZoneOffset.UTC).toEpochMilli(),
             endTime.toInstant(ZoneOffset.UTC).toEpochMilli(),
-        ).map { it.toDomain()}
+        ).map { it.toDomain() }
     }
 
     override suspend fun createTask(task: Task): String {
@@ -59,7 +61,8 @@ class TaskRepositoryImpl @Inject constructor(
         ).map { it.map { entity -> entity.toDomain() } }
     }
 
-    override fun getUnallocatedTasksStream(): Flow<List<Task>> {
-        return taskDao.observeUnallocatedTasks().map { it.map { entity -> entity.toDomain() } }
+    override fun getUnallocatedTasksStream(): Flow<List<UnscheduledTask>> {
+        return taskDao.observeUnallocatedTasks()
+            .map { it.map { entity -> entity.toDomain() }.filterIsInstance<UnscheduledTask>() }
     }
 }
