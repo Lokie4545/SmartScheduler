@@ -13,10 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import com.example.smartscheduler.R
+import com.example.smartscheduler.presentation.today.TodayRoute
 import kotlinx.serialization.serializer
 
 @Composable
@@ -90,7 +92,7 @@ fun SmartSchedulerApplication() {
         }
     ) { innerPadding ->
         NavDisplay(
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
             entryProvider = { key ->
@@ -100,7 +102,7 @@ fun SmartSchedulerApplication() {
                     }
 
                     is Route.Me -> NavEntry(key) { Text("ME") }
-                    is Route.Today -> NavEntry(key) { Text("Today") }
+                    is Route.Today -> NavEntry(key) { TodayRoute(viewModel = hiltViewModel()) }
 
                 }
             }
