@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartscheduler.domain.model.ScheduledTask
+import com.example.smartscheduler.domain.model.Status
 import com.example.smartscheduler.presentation.components.SmartLoadingCircularIndicator
 import com.example.smartscheduler.presentation.components.SmartPriorityChip
 import com.example.smartscheduler.presentation.components.SmartTaskCard
@@ -113,12 +114,10 @@ private fun TodaySuccess(
             SmartTaskCard(
                 modifier = Modifier.fillMaxWidth(),
                 leadingContent = {
-                    var isToggled by remember { mutableStateOf(false) }
                     Checkbox(
-                        checked = isToggled,
+                        checked = (task.status == Status.COMPLETED),
                         onCheckedChange = {
                             onTaskClick(task.id)
-                            isToggled = !isToggled
                         }
                     )
                 },
