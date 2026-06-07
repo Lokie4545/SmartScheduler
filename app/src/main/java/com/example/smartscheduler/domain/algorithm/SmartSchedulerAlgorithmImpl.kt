@@ -1,6 +1,7 @@
 package com.example.smartscheduler.domain.algorithm
 
 import com.example.smartscheduler.domain.model.ScheduledTask
+import com.example.smartscheduler.domain.model.Status
 import com.example.smartscheduler.domain.model.TimeSlot
 import com.example.smartscheduler.domain.model.UnscheduledTask
 import com.example.smartscheduler.domain.model.schedule
@@ -40,18 +41,32 @@ class SmartSchedulerAlgorithmImpl @Inject constructor(
             endTime = LocalDateTime.of(targetDay, workDayEnd)
         )
 
-        val backlogAllocated =
-            backLog.filter { it.duration != null }.sortedByDescending { it.priority }
-                .toMutableList()
+        val backlogAllocated = backLog
+            .filter { it.duration != null && it.status != Status.COMPLETED }
+            .sortedWith(
+                compareByDescending<UnscheduledTask> { it.priority }
+                    .thenBy { it.deadline ?: LocalDateTime.MAX }
+                    .thenBy { it.duration }
+                    .thenBy { it.id }
+            )
+            .toMutableList()
 
 
         val remainingPlan = backlogAllocated.maxOfOrNull { it.priority }?.let { maxPriority ->
             val (evictedTasks, remainingPlan) = currentPlan.partition {
-                it is ScheduledTask && !it.isLocked && it.priority < maxPriority
+                it is ScheduledTask &&
+                    !it.isLocked &&
+                    it.status != Status.COMPLETED &&
+                    it.priority < maxPriority
             }
             backlogAllocated.addAll(
                 evictedTasks.filterIsInstance<ScheduledTask>().map { it.unSchedule() })
-            backlogAllocated.sortByDescending { it.priority }
+            backlogAllocated.sortWith(
+                compareByDescending<UnscheduledTask> { it.priority }
+                    .thenBy { it.deadline ?: LocalDateTime.MAX }
+                    .thenBy { it.duration }
+                    .thenBy { it.id }
+            )
             remainingPlan
         } ?: currentPlan
 
@@ -96,7 +111,7 @@ class SmartSchedulerAlgorithmImpl @Inject constructor(
             }
         }
 
-        val finalSchedule: List<TimeSlot> = remainingPlan + allocatedTasks
+        val finalSchedule: List<TimeSlot> = (remainingPlan + allocatedTasks).sortedBy { it.startTime }
 
         return ScheduleResult.Success(finalSchedule, unallocatedTasks)
     }
@@ -105,19 +120,35 @@ class SmartSchedulerAlgorithmImpl @Inject constructor(
     private fun findFreeWindows(plan: List<TimeSlot>, workTime: WorkTime): List<TimeWindow> {
         val freeWindows = mutableListOf<TimeWindow>()
         var startTime = workTime.startTime
-        plan.sortedBy { it.startTime }
-            .forEach { timeBlock ->
-                if ((startTime.isBefore(timeBlock.startTime))) {
-                    freeWindows.add(
-                        TimeWindow(
-                            startTime = startTime,
-                            endTime = timeBlock.startTime
-                        )
-                    )
-                    startTime =
-                        if (startTime.isBefore(timeBlock.endTime)) timeBlock.endTime else startTime
-                }
+        for (timeBlock in plan.sortedBy { it.startTime }) {
+            if (!timeBlock.endTime.isAfter(workTime.startTime) || !timeBlock.startTime.isBefore(workTime.endTime)) {
+                continue
             }
+
+            val blockStart = if (timeBlock.startTime.isBefore(workTime.startTime)) {
+                workTime.startTime
+            } else {
+                timeBlock.startTime
+            }
+            val blockEnd = if (timeBlock.endTime.isAfter(workTime.endTime)) {
+                workTime.endTime
+            } else {
+                timeBlock.endTime
+            }
+
+            if (startTime.isBefore(blockStart)) {
+                freeWindows.add(
+                    TimeWindow(
+                        startTime = startTime,
+                        endTime = blockStart
+                    )
+                )
+            }
+
+            if (startTime.isBefore(blockEnd)) {
+                startTime = blockEnd
+            }
+        }
         if (startTime.isBefore(workTime.endTime)) {
             freeWindows.add(
                 TimeWindow(startTime = startTime, endTime = workTime.endTime)

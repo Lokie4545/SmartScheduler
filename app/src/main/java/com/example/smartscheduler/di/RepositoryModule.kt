@@ -15,12 +15,14 @@ import javax.inject.Singleton
 abstract class RepositoryModule {
     @Binds
     @Singleton
+    @RealRepository
     abstract fun bindTaskRepository(
         taskRepositoryImpl: TaskRepositoryImpl
     ): TaskRepository
 
     @Binds
     @Singleton
+    @RealRepository
     abstract fun bindEventRepository(
         eventRepositoryImpl: EventRepositoryImpl
     ): EventRepository

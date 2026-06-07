@@ -56,6 +56,8 @@ import com.example.smartscheduler.domain.model.TimeSlot
 import com.example.smartscheduler.presentation.components.SmartLoadingCircularIndicator
 import com.example.smartscheduler.presentation.components.SmartPriorityChip
 import com.example.smartscheduler.presentation.components.SmartTaskCard
+import com.example.smartscheduler.presentation.smartreschedule.SmartReschedulePreviewBottomSheetRoute
+import com.example.smartscheduler.presentation.smartreschedule.SmartRescheduleViewModel
 import com.example.smartscheduler.presentation.today.components.FastAddEventBottomSheet
 import com.example.smartscheduler.presentation.today.components.FastAddTaskBottomSheet
 import com.example.smartscheduler.presentation.today.components.SmartFabMenu
@@ -84,17 +86,37 @@ private object TodayDimensions {
 
 @Composable
 fun TodayRoute(
-    viewModel: TodayViewModel, onNavigateToTaskDetail: (String, String) -> Unit
+    viewModel: TodayViewModel,
+    smartRescheduleViewModel: SmartRescheduleViewModel,
+    onNavigateToTaskDetail: (String, String) -> Unit,
+    onNavigateToSmartRescheduleDiff: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showSmartRescheduleSheet by remember { mutableStateOf(false) }
+
     TodayScreen(uiState = uiState) { action ->
         when (action) {
             is TodayAction.NavigateToTaskDetail -> {
                 onNavigateToTaskDetail(action.draftTitle, action.draftDescription)
             }
 
+            TodayAction.RequestSmartReschedule -> {
+                showSmartRescheduleSheet = true
+            }
+
             else -> viewModel.handleAction(action)
         }
+    }
+
+    if (showSmartRescheduleSheet) {
+        SmartReschedulePreviewBottomSheetRoute(
+            viewModel = smartRescheduleViewModel,
+            onDismissRequest = { showSmartRescheduleSheet = false },
+            onViewChanges = {
+                showSmartRescheduleSheet = false
+                onNavigateToSmartRescheduleDiff()
+            },
+        )
     }
 }
 
@@ -359,7 +381,7 @@ private fun UnscheduledSummaryCard(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_app_reschedule_magic),
-                    contentDescription = null,
+                    contentDescription = "Smart reschedule backlog tasks",
                     modifier = Modifier.size(ButtonDefaults.IconSize)
                 )
 

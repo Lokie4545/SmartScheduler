@@ -23,13 +23,21 @@ object RepositoryFakeModule {
 
     @Provides
     @Singleton
-    @FakeRepository
     fun provideTaskRepository(): TaskRepository = createTaskRepository()
 
     @Provides
     @Singleton
-    @FakeRepository
     fun provideEventRepository(): EventRepository = createEventRepository()
+
+    @Provides
+    @Singleton
+    @FakeRepository
+    fun provideQualifiedTaskRepository(taskRepository: TaskRepository): TaskRepository = taskRepository
+
+    @Provides
+    @Singleton
+    @FakeRepository
+    fun provideQualifiedEventRepository(eventRepository: EventRepository): EventRepository = eventRepository
 
     fun createTaskRepository(): TaskRepository {
         val now = LocalDateTime.now()

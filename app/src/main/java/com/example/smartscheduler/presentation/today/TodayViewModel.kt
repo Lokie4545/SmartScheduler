@@ -2,8 +2,6 @@ package com.example.smartscheduler.presentation.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.room.util.copy
-import com.example.smartscheduler.di.fake.FakeRepository
 import com.example.smartscheduler.domain.algorithm.toDefaultEventSlot
 import com.example.smartscheduler.domain.model.Event
 import com.example.smartscheduler.domain.model.Priority
@@ -32,9 +30,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TodayViewModel @Inject constructor(
-    @param:FakeRepository
     private val taskRepository: TaskRepository,
-    @param:FakeRepository
     private val eventRepository: EventRepository,
 ) : ViewModel() {
 

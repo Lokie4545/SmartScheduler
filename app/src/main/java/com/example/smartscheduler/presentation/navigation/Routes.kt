@@ -13,4 +13,7 @@ sealed class Route : NavKey {
 
     @Serializable
     data object Me: Route()
+
+    @Serializable
+    data object SmartRescheduleDiff: Route()
 }

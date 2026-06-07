@@ -2,7 +2,6 @@ package com.example.smartscheduler.presentation.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -18,6 +17,9 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import com.example.smartscheduler.R
+import com.example.smartscheduler.presentation.smartreschedule.SmartRescheduleAction
+import com.example.smartscheduler.presentation.smartreschedule.SmartRescheduleRoute
+import com.example.smartscheduler.presentation.smartreschedule.SmartRescheduleViewModel
 import com.example.smartscheduler.presentation.today.TodayRoute
 import kotlinx.serialization.serializer
 
@@ -25,76 +27,83 @@ import kotlinx.serialization.serializer
 fun SmartSchedulerApplication() {
     val backStack = rememberRouteNavBackStack(Route.Calendar)
     val currentRoute = backStack.lastOrNull()
+    val showBottomBar = currentRoute !is Route.SmartRescheduleDiff
+    val smartRescheduleViewModel: SmartRescheduleViewModel = hiltViewModel()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar() {
-                NavigationBarItem(
-                    selected = currentRoute is Route.Today,
-                    onClick = {
-                        if (currentRoute !is Route.Today) {
-                            backStack.clear()
-                            backStack.add(Route.Today)
+            if (showBottomBar) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = currentRoute is Route.Today,
+                        onClick = {
+                            if (currentRoute !is Route.Today) {
+                                backStack.clear()
+                                backStack.add(Route.Today)
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                painterResource(R.drawable.ic_app_bottom_nav_today),
+                                contentDescription = null
+                            )
+                        },
+                        label = {
+                            Text("Today")
                         }
-                    },
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_app_bottom_nav_today),
-                            contentDescription = null
-                        )
-                    },
-                    label = {
-                        Text("Today")
-                    }
-                )
+                    )
 
-                NavigationBarItem(
-                    selected = currentRoute is Route.Calendar,
-                    onClick = {
-                        if (currentRoute !is Route.Calendar) {
-                            backStack.clear()
-                            backStack.add(Route.Calendar)
+                    NavigationBarItem(
+                        selected = currentRoute is Route.Calendar,
+                        onClick = {
+                            if (currentRoute !is Route.Calendar) {
+                                backStack.clear()
+                                backStack.add(Route.Calendar)
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                painterResource(R.drawable.ic_app_bottom_nav_calendar),
+                                contentDescription = null
+                            )
+                        },
+                        label = {
+                            Text("Calendar")
                         }
-                    },
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_app_bottom_nav_calendar),
-                            contentDescription = null
-                        )
-                    },
-                    label = {
-                        Text("Calendar")
-                    }
-                )
+                    )
 
-                NavigationBarItem(
-                    selected = currentRoute is Route.Me,
-                    onClick = {
-                        if (currentRoute !is Route.Me) {
-                            backStack.clear()
-                            backStack.add(Route.Me)
+                    NavigationBarItem(
+                        selected = currentRoute is Route.Me,
+                        onClick = {
+                            if (currentRoute !is Route.Me) {
+                                backStack.clear()
+                                backStack.add(Route.Me)
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                painterResource(R.drawable.ic_app_bottom_nav_me),
+                                contentDescription = null
+                            )
+                        },
+                        label = {
+                            Text("Me")
                         }
-                    },
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_app_bottom_nav_me),
-                            contentDescription = null
-                        )
-                    },
-                    label = {
-                        Text("Me")
-                    }
-                )
-
-
+                    )
+                }
             }
         }
     ) { innerPadding ->
         NavDisplay(
             modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
             backStack = backStack,
-            onBack = { backStack.removeLastOrNull() },
+            onBack = {
+                if (backStack.lastOrNull() is Route.SmartRescheduleDiff) {
+                    smartRescheduleViewModel.handleAction(SmartRescheduleAction.ResetSession)
+                }
+                backStack.removeLastOrNull()
+            },
             entryProvider = { key ->
                 when (key) {
                     is Route.Calendar -> NavEntry(key) {
@@ -105,7 +114,18 @@ fun SmartSchedulerApplication() {
                     is Route.Today -> NavEntry(key) {
                         TodayRoute(
                             viewModel = hiltViewModel(),
-                            onNavigateToTaskDetail = { _, _ -> }
+                            smartRescheduleViewModel = smartRescheduleViewModel,
+                            onNavigateToTaskDetail = { _, _ -> },
+                            onNavigateToSmartRescheduleDiff = {
+                                backStack.add(Route.SmartRescheduleDiff)
+                            }
+                        )
+                    }
+
+                    is Route.SmartRescheduleDiff -> NavEntry(key) {
+                        SmartRescheduleRoute(
+                            viewModel = smartRescheduleViewModel,
+                            onNavigateBack = { backStack.removeLastOrNull() },
                         )
                     }
 
