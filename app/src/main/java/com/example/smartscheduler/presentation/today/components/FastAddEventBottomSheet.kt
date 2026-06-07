@@ -20,7 +20,7 @@ fun FastAddEventBottomSheet(
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
     currentTimeSlot: TimeSlot,
-    onSaveDefaultTask: (title: String, description: String) -> Unit,
+    onSaveDefaultEvent: (title: String, description: String) -> Unit,
     onNavigateToFullscreenTask: (draftTitle: String, draftDescription: String) -> Unit
 ) {
     val titleState = rememberTextFieldState()
@@ -28,7 +28,7 @@ fun FastAddEventBottomSheet(
     FastAddBottomSheet(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
-        onSaveDefaultTask = onSaveDefaultTask,
+        onSaveDefault = onSaveDefaultEvent,
         titleState = titleState,
         descriptionState = descriptionState
     ) {

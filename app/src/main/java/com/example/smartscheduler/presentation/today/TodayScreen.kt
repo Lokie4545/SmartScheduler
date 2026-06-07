@@ -2,7 +2,6 @@ package com.example.smartscheduler.presentation.today
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,8 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -25,22 +22,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.smartscheduler.R
 import com.example.smartscheduler.domain.model.ScheduledTask
 import com.example.smartscheduler.domain.model.Status
 import com.example.smartscheduler.domain.model.TimeSlot
 import com.example.smartscheduler.presentation.components.SmartLoadingCircularIndicator
 import com.example.smartscheduler.presentation.components.SmartPriorityChip
 import com.example.smartscheduler.presentation.components.SmartTaskCard
+import com.example.smartscheduler.presentation.today.components.FastAddEventBottomSheet
+import com.example.smartscheduler.presentation.today.components.FastAddTaskBottomSheet
 import com.example.smartscheduler.presentation.today.components.SmartFabMenu
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
-fun TodayRoute(viewModel: TodayViewModel) {
+fun TodayRoute(
+    viewModel: TodayViewModel,
+    onNavigateToTaskDetail: (String, String) -> Unit
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    TodayScreen(uiState = uiState, onTaskAdd = {}, onTaskClick = {})
+    TodayScreen(uiState = uiState) { action ->
+        when (action) {
+            is TodayAction.NavigateToTaskDetail -> {
+                onNavigateToTaskDetail(action.draftTitle, action.draftDescription)
+            }
+            else -> viewModel.handleAction(action)
+        }
+    }
 
 }
 
@@ -49,18 +58,21 @@ sealed interface TodayBottomSheetConfig {
     data object AddTask : TodayBottomSheetConfig
     data class AddEvent(val defaultTimeSlot: TimeSlot) : TodayBottomSheetConfig
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
     modifier: Modifier = Modifier,
     uiState: TodayUiState,
-    onTaskClick: (String) -> Unit,
-    onTaskAdd: () -> Unit
+    onAction: (TodayAction) -> Unit
 ) {
-    var showBottomSheet by remember { mutableStateOf(false) }
 
     var bottomSheetConfig by remember {
         mutableStateOf<TodayBottomSheetConfig>(TodayBottomSheetConfig.None)
+    }
+
+    val dateFormatter = remember {
+        DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault())
     }
 
     Scaffold(
@@ -68,10 +80,12 @@ fun TodayScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    val title = uiState.currentDateTime.toLocalDate().toString()
-                    Text(title,
+                    val title = uiState.currentDate.format(dateFormatter)
+                    Text(
+                        text = title,
                         modifier = Modifier.padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-                        style = MaterialTheme.typography.headlineMedium)
+                        style = MaterialTheme.typography.headlineMedium
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -80,15 +94,16 @@ fun TodayScreen(
             )
         },
         floatingActionButton = {
-            SmartFabMenu(onAddTaskClick = {
-                bottomSheetConfig = TodayBottomSheetConfig.AddTask
-                showBottomSheet = true
-            }, onAddEventClick = {
-                bottomSheetConfig = TodayBottomSheetConfig.AddEvent(
+            if (uiState is TodayUiState.Success) {
+                SmartFabMenu(onAddTaskClick = {
+                    bottomSheetConfig = TodayBottomSheetConfig.AddTask
+                }, onAddEventClick = {
+                    bottomSheetConfig = TodayBottomSheetConfig.AddEvent(
+                        uiState.suggestedEventTimeSlot
+                    )
+                })
+            }
 
-                )
-                showBottomSheet = true
-            })
         }
     ) { innerPadding ->
         when (uiState) {
@@ -118,12 +133,62 @@ fun TodayScreen(
             }
 
             is TodayUiState.Success -> {
-                TodaySuccess(tasks = uiState.tasks, ) {}
+                TodaySuccess(tasks = uiState.tasks) {}
             }
         }
 
-        if (showBottomSheet) {
+        when (val config = bottomSheetConfig) {
+            is TodayBottomSheetConfig.AddTask -> {
+                FastAddTaskBottomSheet(
+                    onDismissRequest = {
+                        onAction(TodayAction.DismissFastAddRequest)
+                        bottomSheetConfig = TodayBottomSheetConfig.None
+                    },
+                    onSaveDefaultTask = { title, description ->
+                        onAction(
+                            TodayAction.AddQuickTask(
+                                title = title,
+                                description = description
+                            )
+                        )
+                    }
+                ) { draftTitle, draftDescription ->
+                    onAction(
+                        TodayAction.NavigateToTaskDetail(
+                            draftTitle, draftDescription
+                        )
+                    )
+                }
+            }
 
+            is TodayBottomSheetConfig.AddEvent -> {
+
+                FastAddEventBottomSheet(
+                    onDismissRequest = {
+                        onAction(TodayAction.DismissFastAddRequest)
+                        bottomSheetConfig = TodayBottomSheetConfig.None
+                    },
+                    onSaveDefaultEvent = { title, description ->
+                        onAction(
+                            TodayAction.AddQuickEvent(
+                                title = title,
+                                description = description,
+                                timeSlot = config.defaultTimeSlot
+                            )
+                        )
+                    },
+                    currentTimeSlot = config.defaultTimeSlot
+                ) { draftTitle, draftDescription ->
+                    onAction(
+                        TodayAction.NavigateToTaskDetail(
+                            draftTitle, draftDescription
+                        )
+                    )
+                    bottomSheetConfig = TodayBottomSheetConfig.None
+                }
+            }
+
+            is TodayBottomSheetConfig.None -> {}
         }
     }
 }

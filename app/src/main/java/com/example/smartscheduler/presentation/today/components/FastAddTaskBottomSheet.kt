@@ -26,7 +26,7 @@ fun FastAddTaskBottomSheet(
     FastAddBottomSheet(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
-        onSaveDefaultTask = onSaveDefaultTask,
+        onSaveDefault = onSaveDefaultTask,
         titleState = titleState,
         descriptionState = descriptionState
     ) {

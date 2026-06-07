@@ -102,7 +102,12 @@ fun SmartSchedulerApplication() {
                     }
 
                     is Route.Me -> NavEntry(key) { Text("ME") }
-                    is Route.Today -> NavEntry(key) { TodayRoute(viewModel = hiltViewModel()) }
+                    is Route.Today -> NavEntry(key) {
+                        TodayRoute(
+                            viewModel = hiltViewModel(),
+                            onNavigateToTaskDetail = { _, _ -> }
+                        )
+                    }
 
                 }
             }

@@ -40,7 +40,7 @@ import com.example.smartscheduler.ui.theme.SmartSchedulerTheme
 fun FastAddBottomSheet(
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
-    onSaveDefaultTask: (title: String, description: String) -> Unit,
+    onSaveDefault: (title: String, description: String) -> Unit,
     titleState: TextFieldState,
     descriptionState: TextFieldState,
     chipsContent: @Composable () -> Unit
@@ -79,7 +79,7 @@ fun FastAddBottomSheet(
                 FilledIconButton(
                     modifier = Modifier.size(40.dp),
                     onClick = {
-                        onSaveDefaultTask(
+                        onSaveDefault(
                             titleState.text.toString(),
                             descriptionState.text.toString()
                         )
