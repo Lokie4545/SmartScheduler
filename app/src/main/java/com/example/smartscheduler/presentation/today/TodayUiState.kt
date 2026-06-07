@@ -1,11 +1,10 @@
 package com.example.smartscheduler.presentation.today
 
+import com.example.smartscheduler.domain.model.Event
 import com.example.smartscheduler.domain.model.ScheduledTask
-import com.example.smartscheduler.domain.model.Task
 import com.example.smartscheduler.domain.model.TimeSlot
+import java.time.Duration
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 
 sealed interface TodayUiState {
     val currentDate: LocalDate
@@ -18,7 +17,10 @@ sealed interface TodayUiState {
 
     data class Success(
         override val currentDate: LocalDate,
-        val tasks: List<ScheduledTask>,
+        val morningTasks: List<TimeSlot>,
+        val afternoonTasks: List<TimeSlot>,
+        val unscheduledTaskCount: Int,
+        val unscheduledDuration: Duration,
         val suggestedEventTimeSlot: TimeSlot
     ) : TodayUiState
 }

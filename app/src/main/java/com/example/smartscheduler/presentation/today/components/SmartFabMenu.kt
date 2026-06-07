@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,9 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.smartscheduler.R
+import com.example.smartscheduler.ui.theme.SmartSchedulerTheme
 
+private object FabMenuSpacing {
+    val Gap = 16.dp
+}
 
 @Composable
 fun SmartFabMenu(
@@ -37,32 +43,55 @@ fun SmartFabMenu(
         label = "fab_rotation"
     )
 
+    SmartFabMenuContent(
+        isExpanded = isExpanded,
+        rotationAngle = rotationAngle,
+        onToggleExpanded = { isExpanded = !isExpanded },
+        onAddTaskClick = {
+            isExpanded = false
+            onAddTaskClick()
+        },
+        onAddEventClick = {
+            isExpanded = false
+            onAddEventClick()
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun SmartFabMenuContent(
+    isExpanded: Boolean,
+    rotationAngle: Float,
+    onToggleExpanded: () -> Unit,
+    onAddTaskClick: () -> Unit,
+    onAddEventClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(FabMenuSpacing.Gap)
     ) {
         AnimatedVisibility(visible = isExpanded) {
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(FabMenuSpacing.Gap)
             ) {
                 SmallFloatingActionButton(
-                    onClick = {
-                        isExpanded = false
-                        onAddEventClick()
-                    }
+                    onClick = onAddEventClick,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
-                    Icon(painterResource(R.drawable.ic_app_event), contentDescription = null)
+                    Icon(painterResource(R.drawable.ic_app_event), contentDescription = "Add event")
                 }
 
                 SmallFloatingActionButton(
-                    onClick = {
-                        isExpanded = false
-                        onAddTaskClick()
-                    }
+                    onClick = onAddTaskClick,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
-                    Icon(painterResource(R.drawable.ic_app_task), contentDescription = null)
+                    Icon(painterResource(R.drawable.ic_app_task), contentDescription = "Add task")
                 }
             }
         }
@@ -70,13 +99,42 @@ fun SmartFabMenu(
 
 
         FloatingActionButton(
-            onClick = { isExpanded = !isExpanded }
+            onClick = onToggleExpanded,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
-            Icon(painterResource(R.drawable.ic_app_fab_plus),
+            Icon(
+                painterResource(R.drawable.ic_app_fab_plus),
                 modifier = Modifier.graphicsLayer {
                     rotationZ = rotationAngle
                 },
-                contentDescription = null)
+                contentDescription = if (isExpanded) "Collapse menu" else "Expand menu"
+            )
         }
+    }
+}
+
+@Preview(apiLevel = 35, showBackground = true)
+@Composable
+private fun SmartFabMenuPreview() {
+    SmartSchedulerTheme(dynamicColor = false) {
+        SmartFabMenu(
+            onAddTaskClick = {},
+            onAddEventClick = {}
+        )
+    }
+}
+
+@Preview(name = "Expanded FAB menu", apiLevel = 35, showBackground = true)
+@Composable
+private fun SmartFabMenuExpandedPreview() {
+    SmartSchedulerTheme(dynamicColor = false) {
+        SmartFabMenuContent(
+            isExpanded = true,
+            rotationAngle = 45f,
+            onToggleExpanded = {},
+            onAddTaskClick = {},
+            onAddEventClick = {}
+        )
     }
 }

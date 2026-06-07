@@ -1,18 +1,23 @@
 package com.example.smartscheduler.presentation.today.components
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.smartscheduler.R
+import com.example.smartscheduler.ui.theme.SmartSchedulerTheme
 
 @Composable
 fun FastAddTaskBottomSheet(
@@ -30,7 +35,7 @@ fun FastAddTaskBottomSheet(
         titleState = titleState,
         descriptionState = descriptionState
     ) {
-        FastAddTaskChipsRow {
+        FastAddTaskChipsRow(modifier = Modifier.weight(1f)) {
             onNavigateToFullscreenTask(
                 titleState.text.toString(),
                 descriptionState.text.toString()
@@ -42,12 +47,12 @@ fun FastAddTaskBottomSheet(
 
 @Composable
 private fun FastAddTaskChipsRow(modifier: Modifier = Modifier, onChipClick: () -> Unit) {
-    Row(
-        modifier = modifier
-            .wrapContentSize(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+    val scrollState = rememberScrollState()
 
+    Row(
+        modifier = modifier.horizontalScroll(scrollState),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         SuggestionChip(
             onClick = onChipClick,
@@ -91,3 +96,21 @@ private fun FastAddTaskChipsRow(modifier: Modifier = Modifier, onChipClick: () -
         )
     }
 }
+
+@Preview(name = "Fast add mini task", widthDp = 393, apiLevel = 35, showBackground = true)
+@Composable
+private fun FastAddMiniTaskContentPreview() {
+    SmartSchedulerTheme(dynamicColor = false) {
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+            FastAddBottomSheetContent(
+                titleState = rememberTextFieldState(),
+                descriptionState = rememberTextFieldState(),
+                onSaveDefault = { _, _ -> },
+                chipsContent = {
+                    FastAddTaskChipsRow(modifier = Modifier.weight(1f), onChipClick = {})
+                }
+            )
+        }
+    }
+}
+
