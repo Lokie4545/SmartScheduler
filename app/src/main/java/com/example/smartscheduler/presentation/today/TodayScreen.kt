@@ -40,7 +40,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -146,8 +148,9 @@ fun TodayScreen(
         mutableStateOf<TodayBottomSheetConfig>(TodayBottomSheetConfig.None)
     }
 
-    val dateFormatter = remember {
-        DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault())
+    val datePattern = stringResource(R.string.date_format_full)
+    val dateFormatter = remember(datePattern) {
+        DateTimeFormatter.ofPattern(datePattern, Locale.getDefault())
     }
 
     Scaffold(
@@ -223,7 +226,7 @@ fun TodayScreen(
         when (val config = bottomSheetConfig) {
             is TodayBottomSheetConfig.AddTask -> {
                 FastAddTaskBottomSheet(
-                    dateLabel = "Today",
+                    dateLabel = stringResource(R.string.common_today),
                     durationLabel = formatDuration(config.defaultDuration),
                     onDismissRequest = {
                     onAction(TodayAction.DismissFastAddRequest)
@@ -249,7 +252,7 @@ fun TodayScreen(
 
             is TodayBottomSheetConfig.AddEvent -> {
                 FastAddEventBottomSheet(
-                    dateLabel = "Today",
+                    dateLabel = stringResource(R.string.common_today),
                     onDismissRequest = {
                         onAction(TodayAction.DismissFastAddRequest)
                         bottomSheetConfig = TodayBottomSheetConfig.None
@@ -298,7 +301,7 @@ private fun TodayErrorContent(
         modifier = modifier.padding(TodaySpacing.ExtraLarge), contentAlignment = Alignment.Center
     ) {
         Text(
-            text = message.ifBlank { "Something went wrong" },
+            text = message.ifBlank { stringResource(R.string.today_error_fallback) },
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.error
         )
@@ -314,6 +317,9 @@ private fun TodayContent(
     onTaskClick: (ScheduledTask) -> Unit,
     onEventClick: (Event) -> Unit,
 ) {
+    val morningTitle = stringResource(R.string.today_section_morning)
+    val afternoonTitle = stringResource(R.string.today_section_afternoon)
+
     LazyColumn(
         modifier = modifier, contentPadding = PaddingValues(bottom = TodaySpacing.ContentBottom)
     ) {
@@ -347,7 +353,7 @@ private fun TodayContent(
         }
 
         todayScheduleSection(
-            title = "Morning",
+            title = morningTitle,
             iconResId = R.drawable.ic_app_section_morning,
             items = uiState.morningTasks,
             onTaskCheckedChange = onTaskCheckedChange,
@@ -357,7 +363,7 @@ private fun TodayContent(
         )
 
         todayScheduleSection(
-            title = "Afternoon",
+            title = afternoonTitle,
             iconResId = R.drawable.ic_app_section_afternoon,
             items = uiState.afternoonTasks,
             onTaskCheckedChange = onTaskCheckedChange,
@@ -381,12 +387,12 @@ private fun TodayEmptyState(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(TodaySpacing.Small),
         ) {
             Text(
-                text = "No tasks scheduled for today",
+                text = stringResource(R.string.today_empty_title),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = "Rest, or pick backlog tasks and let Smart Reschedule find a realistic slot.",
+                text = stringResource(R.string.today_empty_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -431,14 +437,18 @@ private fun UnscheduledSummaryCard(
                 verticalArrangement = Arrangement.spacedBy(TodaySpacing.ExtraSmall)
             ) {
                 Text(
-                    text = formatUnscheduledTitle(taskCount),
+                    text = pluralStringResource(
+                        R.plurals.today_unscheduled_title,
+                        taskCount,
+                        taskCount,
+                    ),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "~ ${formatDuration(totalDuration)} total",
+                    text = stringResource(R.string.today_unscheduled_total, formatDuration(totalDuration)),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     maxLines = 1,
@@ -454,7 +464,7 @@ private fun UnscheduledSummaryCard(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_app_reschedule_magic),
-                    contentDescription = "Smart reschedule backlog tasks",
+                    contentDescription = stringResource(R.string.today_smart_reschedule_content_description),
                     modifier = Modifier.size(ButtonDefaults.IconSize)
                 )
 
@@ -625,8 +635,10 @@ private fun TodayTaskRow(
     }
 }
 
+@Composable
 private fun formatTimeSlotTime(task: TimeSlot): String {
-    val formatter = DateTimeFormatter.ofPattern("H:mm")
+    val timePattern = stringResource(R.string.time_format_24h)
+    val formatter = remember(timePattern) { DateTimeFormatter.ofPattern(timePattern) }
     return "${task.startTime.format(formatter)} - ${task.endTime.format(formatter)} \u2022 ${
         formatDuration(
             task.duration
@@ -634,19 +646,15 @@ private fun formatTimeSlotTime(task: TimeSlot): String {
     }"
 }
 
-private fun formatUnscheduledTitle(taskCount: Int): String {
-    val noun = if (taskCount == 1) "task" else "tasks"
-    return "$taskCount unscheduled $noun"
-}
-
+@Composable
 private fun formatDuration(duration: Duration): String {
     val hours = duration.toHours()
     val minutes = duration.minusHours(hours).toMinutes()
 
     return when {
-        hours > 0 && minutes > 0 -> "${hours}h ${minutes}m"
-        hours > 0 -> "$hours h"
-        else -> "${minutes.coerceAtLeast(0)} min"
+        hours > 0 && minutes > 0 -> stringResource(R.string.common_hour_minute, hours, minutes)
+        hours > 0 -> stringResource(R.string.common_hour, hours)
+        else -> stringResource(R.string.common_minute, minutes.coerceAtLeast(0))
     }
 }
 

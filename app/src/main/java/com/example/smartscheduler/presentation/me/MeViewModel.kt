@@ -1,9 +1,12 @@
 package com.example.smartscheduler.presentation.me
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartscheduler.R
 import com.example.smartscheduler.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -14,11 +17,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MeViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
     val uiState: StateFlow<MeUiState> = settingsRepository.settingsStream
         .map { settings -> MeUiState.Success(settings) as MeUiState }
-        .catch { error -> emit(MeUiState.Error(error.message ?: "Unable to load settings")) }
+        .catch { error -> emit(MeUiState.Error(error.message ?: context.getString(R.string.settings_error_fallback))) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

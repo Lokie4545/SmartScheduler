@@ -37,10 +37,5 @@ sealed interface ScheduleItemDetailUiState {
         val canMarkCompleted: Boolean =
             mode == ScheduleItemDetailMode.EDIT && itemKind == ScheduleItemKind.TASK && !isSaving
         val isEventTimeValid: Boolean = eventStartTime.isBefore(eventEndTime)
-        val completionButtonText: String = if (status == Status.COMPLETED) {
-            "Mark pending"
-        } else {
-            "Mark completed"
-        }
     }
 }

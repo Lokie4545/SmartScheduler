@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -101,14 +102,14 @@ fun FastAddBottomSheetContent(
         ) {
             SmartBorderlessTextField(
                 state = titleState,
-                placeholder = "Add title",
+                placeholder = stringResource(R.string.fast_add_title_placeholder),
                 modifier = Modifier
                     .fillMaxWidth(),
                 textStyle = MaterialTheme.typography.headlineMedium
             )
             SmartBorderlessTextField(
                 state = descriptionState,
-                placeholder = "Description",
+                placeholder = stringResource(R.string.fast_add_description_placeholder),
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = MaterialTheme.typography.titleMedium
             )
@@ -153,7 +154,7 @@ private fun FastAddSaveButton(
     ) {
         Icon(
             painterResource(R.drawable.ic_app_check_small),
-            contentDescription = "Save quick add"
+            contentDescription = stringResource(R.string.fast_add_save_content_description)
         )
     }
 }

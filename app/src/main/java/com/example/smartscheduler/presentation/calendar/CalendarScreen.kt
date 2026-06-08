@@ -26,9 +26,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.smartscheduler.R
 import com.example.smartscheduler.domain.model.Priority
 import com.example.smartscheduler.domain.model.Status
 import com.example.smartscheduler.domain.model.TimeSlot
@@ -47,7 +50,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Month
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 private object CalendarSpacing {
     val Small = 8.dp
@@ -310,33 +312,38 @@ private fun CalendarErrorContent(
             verticalArrangement = Arrangement.spacedBy(CalendarSpacing.Medium),
         ) {
             Text(
-                text = message.ifBlank { "Unable to load calendar" },
+                text = message.ifBlank { stringResource(R.string.calendar_error_fallback) },
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.error,
             )
             Button(onClick = onRetry) {
-                Text("Retry")
+                Text(stringResource(R.string.common_retry))
             }
         }
     }
 }
 
+@Composable
 private fun LocalDate.formatFastAddDateLabel(): String {
     val today = LocalDate.now()
     return when (this) {
-        today -> "Today"
-        today.plusDays(1) -> "Tomorrow"
-        else -> format(DateTimeFormatter.ofPattern("MMM d", Locale.getDefault()))
+        today -> stringResource(R.string.common_today)
+        today.plusDays(1) -> stringResource(R.string.common_tomorrow)
+        else -> {
+            val pattern = stringResource(R.string.date_format_short)
+            format(DateTimeFormatter.ofPattern(pattern, LocalLocale.current.platformLocale))
+        }
     }
 }
 
+@Composable
 private fun Duration.formatFastAddDuration(): String {
     val hours = toHours()
     val minutes = minusHours(hours).toMinutes()
     return when {
-        hours > 0 && minutes > 0 -> "${hours} h ${minutes} min"
-        hours > 0 -> "${hours} h"
-        else -> "${minutes.coerceAtLeast(0)} min"
+        hours > 0 && minutes > 0 -> stringResource(R.string.common_hour_minute, hours, minutes)
+        hours > 0 -> stringResource(R.string.common_hour, hours)
+        else -> stringResource(R.string.common_minute, minutes.coerceAtLeast(0))
     }
 }
 

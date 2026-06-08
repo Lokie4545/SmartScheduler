@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.smartscheduler.R
@@ -83,7 +84,10 @@ private fun SmartFabMenuContent(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
-                    Icon(painterResource(R.drawable.ic_app_event), contentDescription = "Add event")
+                    Icon(
+                        painterResource(R.drawable.ic_app_event),
+                        contentDescription = stringResource(R.string.fab_add_event_content_description)
+                    )
                 }
 
                 SmallFloatingActionButton(
@@ -91,7 +95,10 @@ private fun SmartFabMenuContent(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
-                    Icon(painterResource(R.drawable.ic_app_task), contentDescription = "Add task")
+                    Icon(
+                        painterResource(R.drawable.ic_app_task),
+                        contentDescription = stringResource(R.string.fab_add_task_content_description)
+                    )
                 }
             }
         }
@@ -108,7 +115,11 @@ private fun SmartFabMenuContent(
                 modifier = Modifier.graphicsLayer {
                     rotationZ = rotationAngle
                 },
-                contentDescription = if (isExpanded) "Collapse menu" else "Expand menu"
+                contentDescription = if (isExpanded) {
+                    stringResource(R.string.fab_collapse_content_description)
+                } else {
+                    stringResource(R.string.fab_expand_content_description)
+                }
             )
         }
     }

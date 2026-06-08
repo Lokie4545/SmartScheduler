@@ -1,5 +1,7 @@
 package com.example.smartscheduler.di.fake
 
+import android.content.Context
+import com.example.smartscheduler.R
 import com.example.smartscheduler.data.repository.fake.FakeEventRepository
 import com.example.smartscheduler.data.repository.fake.FakeTaskRepository
 import com.example.smartscheduler.domain.model.Event
@@ -12,6 +14,7 @@ import com.example.smartscheduler.domain.repository.TaskRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.time.Duration
 import java.time.LocalDateTime
@@ -23,11 +26,11 @@ object RepositoryFakeModule {
 
     @Provides
     @Singleton
-    fun provideTaskRepository(): TaskRepository = createTaskRepository()
+    fun provideTaskRepository(@ApplicationContext context: Context): TaskRepository = createTaskRepository(context)
 
     @Provides
     @Singleton
-    fun provideEventRepository(): EventRepository = createEventRepository()
+    fun provideEventRepository(@ApplicationContext context: Context): EventRepository = createEventRepository(context)
 
     @Provides
     @Singleton
@@ -39,15 +42,15 @@ object RepositoryFakeModule {
     @FakeRepository
     fun provideQualifiedEventRepository(eventRepository: EventRepository): EventRepository = eventRepository
 
-    fun createTaskRepository(): TaskRepository {
+    private fun createTaskRepository(context: Context): TaskRepository {
         val now = LocalDateTime.now()
 
         return FakeTaskRepository(
             initialTasks = listOf(
                 UnscheduledTask(
                     id = "1",
-                    name = "Купить молоко",
-                    description = "Нужно купить 2л молока в Магните",
+                    name = context.getString(R.string.fake_task_buy_milk),
+                    description = context.getString(R.string.fake_task_buy_milk_description),
                     status = Status.PENDING,
                     priority = Priority.LOW,
                     isLocked = false,
@@ -57,8 +60,8 @@ object RepositoryFakeModule {
                 ),
                 ScheduledTask(
                     id = "2",
-                    name = "Встреча по проекту",
-                    description = "Обсуждение архитектуры приложения",
+                    name = context.getString(R.string.fake_task_project_meeting),
+                    description = context.getString(R.string.fake_task_project_meeting_description),
                     status = Status.SCHEDULED,
                     priority = Priority.HIGH,
                     isLocked = true,
@@ -69,8 +72,8 @@ object RepositoryFakeModule {
                 ),
                 UnscheduledTask(
                     id = "3",
-                    name = "Зал",
-                    description = "Тренировка ног",
+                    name = context.getString(R.string.fake_task_gym),
+                    description = context.getString(R.string.fake_task_gym_description),
                     status = Status.PENDING,
                     priority = Priority.MEDIUM,
                     isLocked = false,
@@ -80,7 +83,7 @@ object RepositoryFakeModule {
                 ),
                 ScheduledTask(
                     id = "4",
-                    name = "Проверка почты",
+                    name = context.getString(R.string.fake_task_email_check),
                     description = null,
                     status = Status.COMPLETED,
                     priority = Priority.LOW,
@@ -92,8 +95,8 @@ object RepositoryFakeModule {
                 ),
                 ScheduledTask(
                     id = "5",
-                    name = "Срочный багфикс",
-                    description = "Починить крэш на главном экране",
+                    name = context.getString(R.string.fake_task_urgent_bugfix),
+                    description = context.getString(R.string.fake_task_urgent_bugfix_description),
                     status = Status.OVERDUE,
                     priority = Priority.HIGH,
                     isLocked = false,
@@ -106,22 +109,22 @@ object RepositoryFakeModule {
         )
     }
 
-    fun createEventRepository(): EventRepository {
+    private fun createEventRepository(context: Context): EventRepository {
         val now = LocalDateTime.now()
 
         return FakeEventRepository(
             initialEvents = listOf(
                 Event(
                     id = "event-1",
-                    name = "Обед",
-                    description = "Перерыв между задачами",
+                    name = context.getString(R.string.fake_event_lunch),
+                    description = context.getString(R.string.fake_event_lunch_description),
                     startTime = now.withHour(13).withMinute(0).withSecond(0).withNano(0),
                     endTime = now.withHour(14).withMinute(0).withSecond(0).withNano(0)
                 ),
                 Event(
                     id = "event-2",
-                    name = "Созвон",
-                    description = "Синхронизация по плану дня",
+                    name = context.getString(R.string.fake_event_call),
+                    description = context.getString(R.string.fake_event_call_description),
                     startTime = now.plusHours(3),
                     endTime = now.plusHours(4)
                 )

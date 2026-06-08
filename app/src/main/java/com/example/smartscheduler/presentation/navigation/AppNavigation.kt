@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -191,7 +192,7 @@ fun SmartSchedulerApplication() {
                             )
                         },
                         label = {
-                            Text("Today")
+                            Text(stringResource(R.string.nav_today))
                         }
                     )
 
@@ -209,7 +210,7 @@ fun SmartSchedulerApplication() {
                             )
                         },
                         label = {
-                            Text("Calendar")
+                            Text(stringResource(R.string.nav_calendar))
                         }
                     )
 
@@ -227,7 +228,7 @@ fun SmartSchedulerApplication() {
                             )
                         },
                         label = {
-                            Text("Me")
+                            Text(stringResource(R.string.nav_me))
                         }
                     )
                 }

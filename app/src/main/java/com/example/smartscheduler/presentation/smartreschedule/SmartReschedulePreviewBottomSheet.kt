@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -125,7 +126,8 @@ private fun SmartReschedulePreviewContent(
     ) {
         when (uiState) {
             is SmartRescheduleUiState.Loading -> SmartReschedulePreviewMessage(
-                text = "Calculating your day...",
+                text = stringResource(R.string.smart_reschedule_calculating),
+                isLoading = true,
                 modifier = Modifier.weight(1f),
             )
 
@@ -136,7 +138,7 @@ private fun SmartReschedulePreviewContent(
             )
 
             is SmartRescheduleUiState.Empty -> SmartReschedulePreviewMessage(
-                text = "No changes proposed",
+                text = stringResource(R.string.smart_reschedule_no_changes),
                 modifier = Modifier.weight(1f),
             )
 
@@ -156,7 +158,7 @@ private fun SmartReschedulePreviewContent(
             contentPadding = ButtonDefaults.ContentPadding,
         ) {
             Text(
-                text = "View changes",
+                text = stringResource(R.string.smart_reschedule_view_changes),
                 style = MaterialTheme.typography.labelLarge,
             )
         }
@@ -181,12 +183,16 @@ private fun SmartReschedulePreviewSuccess(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "Your tasks on today",
+            text = stringResource(R.string.smart_reschedule_tasks_today),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
-            text = "${uiState.selectedBacklogCount} tasks ~ ${uiState.selectedBacklogDuration.formatSmartDuration()}",
+            text = stringResource(
+                R.string.smart_reschedule_selected_summary,
+                uiState.selectedBacklogCount,
+                uiState.selectedBacklogDuration.formatSmartDuration(),
+            ),
             modifier = Modifier.padding(top = SmartRescheduleSheetSpacing.Small),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
@@ -200,7 +206,7 @@ private fun SmartReschedulePreviewSuccess(
             if (expiredCandidates.isNotEmpty()) {
                 item(key = "expired_header") {
                     SmartReschedulePreviewSectionHeader(
-                        title = "Expired",
+                        title = stringResource(R.string.smart_reschedule_expired),
                         iconResId = R.drawable.ic_app_circle_minus,
                     )
                 }
@@ -228,7 +234,7 @@ private fun SmartReschedulePreviewSuccess(
             if (waitingCandidates.isNotEmpty()) {
                 item(key = "waiting_header") {
                     SmartReschedulePreviewSectionHeader(
-                        title = "Waiting",
+                        title = stringResource(R.string.smart_reschedule_waiting),
                         iconResId = R.drawable.ic_app_smile,
                     )
                 }
@@ -260,6 +266,7 @@ private fun SmartReschedulePreviewSuccess(
 private fun SmartReschedulePreviewMessage(
     text: String,
     modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
     onRetry: (() -> Unit)? = null,
 ) {
     Box(
@@ -270,7 +277,7 @@ private fun SmartReschedulePreviewMessage(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(SmartRescheduleSheetSpacing.Medium),
         ) {
-            if (text.startsWith("Calculating")) {
+            if (isLoading) {
                 SmartLoadingCircularIndicator(isLoading = true)
             }
             Text(
@@ -280,7 +287,7 @@ private fun SmartReschedulePreviewMessage(
             )
             if (onRetry != null) {
                 Button(onClick = onRetry) {
-                    Text("Retry")
+                    Text(stringResource(R.string.common_retry))
                 }
             }
         }

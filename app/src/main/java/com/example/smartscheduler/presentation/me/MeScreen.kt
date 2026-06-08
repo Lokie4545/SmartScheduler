@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -86,8 +87,6 @@ private enum class WorkdayTimeTarget {
     END,
 }
 
-private val SettingsTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
-
 @Composable
 fun MeRoute(
     viewModel: MeViewModel,
@@ -118,7 +117,7 @@ fun MeScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Me",
+                        text = stringResource(R.string.settings_title),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -159,7 +158,11 @@ fun MeScreen(
         }
 
         SettingsTimePickerDialog(
-            title = if (target == WorkdayTimeTarget.START) "Workday start" else "Workday end",
+            title = if (target == WorkdayTimeTarget.START) {
+                stringResource(R.string.settings_workday_start_picker)
+            } else {
+                stringResource(R.string.settings_workday_end_picker)
+            },
             initialTime = initialTime,
             onConfirm = { selectedTime ->
                 when (target) {
@@ -197,15 +200,15 @@ private fun MeSuccessContent(
         }
 
         item(key = "appearance") {
-            SettingsCard(title = "Appearance") {
+            SettingsCard(title = stringResource(R.string.settings_appearance)) {
                 ThemeModeSelector(
                     selectedThemeMode = uiState.settings.themeMode,
                     onThemeModeSelected = { onAction(MeAction.ChangeThemeMode(it)) },
                 )
                 SettingsSwitchRow(
                     iconResId = R.drawable.ic_app_sun,
-                    title = "Dynamic color",
-                    supportingText = "Use Android 12+ wallpaper colors when available",
+                    title = stringResource(R.string.settings_dynamic_color),
+                    supportingText = stringResource(R.string.settings_dynamic_color_supporting),
                     checked = uiState.settings.dynamicColor,
                     onCheckedChange = { onAction(MeAction.ChangeDynamicColor(it)) },
                 )
@@ -213,19 +216,19 @@ private fun MeSuccessContent(
         }
 
         item(key = "planning") {
-            SettingsCard(title = "Planning") {
+            SettingsCard(title = stringResource(R.string.settings_planning)) {
                 SettingsActionRow(
                     iconResId = R.drawable.ic_app_chip_clock,
-                    title = "Workday start",
-                    supportingText = "Smart Reschedule starts placing work here",
-                    value = uiState.settings.workDayStart.format(SettingsTimeFormatter),
+                    title = stringResource(R.string.settings_workday_start),
+                    supportingText = stringResource(R.string.settings_workday_start_supporting),
+                    value = formatSettingsTime(uiState.settings.workDayStart),
                     onClick = onPickWorkdayStart,
                 )
                 SettingsActionRow(
                     iconResId = R.drawable.ic_app_chip_clock,
-                    title = "Workday end",
-                    supportingText = "Tasks after this time stay out of auto-planning",
-                    value = uiState.settings.workDayEnd.format(SettingsTimeFormatter),
+                    title = stringResource(R.string.settings_workday_end),
+                    supportingText = stringResource(R.string.settings_workday_end_supporting),
+                    value = formatSettingsTime(uiState.settings.workDayEnd),
                     onClick = onPickWorkdayEnd,
                 )
                 WorkdaySummary(settings = uiState.settings)
@@ -233,15 +236,15 @@ private fun MeSuccessContent(
         }
 
         item(key = "quick_add") {
-            SettingsCard(title = "Quick add defaults") {
+            SettingsCard(title = stringResource(R.string.settings_quick_add_defaults)) {
                 DurationChipsRow(
-                    title = "Task duration",
+                    title = stringResource(R.string.settings_task_duration),
                     selectedDuration = uiState.settings.defaultTaskDuration,
                     options = uiState.taskDurationOptions,
                     onDurationSelected = { onAction(MeAction.ChangeDefaultTaskDuration(it)) },
                 )
                 DurationChipsRow(
-                    title = "Event duration",
+                    title = stringResource(R.string.settings_event_duration),
                     selectedDuration = uiState.settings.defaultEventDuration,
                     options = uiState.eventDurationOptions,
                     onDurationSelected = { onAction(MeAction.ChangeDefaultEventDuration(it)) },
@@ -250,11 +253,11 @@ private fun MeSuccessContent(
         }
 
         item(key = "calendar") {
-            SettingsCard(title = "Calendar") {
+            SettingsCard(title = stringResource(R.string.settings_calendar)) {
                 SettingsSwitchRow(
                     iconResId = R.drawable.ic_app_bottom_nav_calendar,
-                    title = "Week starts on Monday",
-                    supportingText = "Calendar grid follows your planning week",
+                    title = stringResource(R.string.settings_week_starts_monday),
+                    supportingText = stringResource(R.string.settings_week_starts_monday_supporting),
                     checked = uiState.settings.weekStartsOnMonday,
                     onCheckedChange = { onAction(MeAction.ChangeWeekStartsOnMonday(it)) },
                 )
@@ -262,18 +265,18 @@ private fun MeSuccessContent(
         }
 
         item(key = "mvp_status") {
-            SettingsCard(title = "MVP status") {
+            SettingsCard(title = stringResource(R.string.settings_mvp_status)) {
                 ReadOnlyInfoRow(
                     iconResId = R.drawable.ic_app_reschedule_magic,
-                    title = "Repository source",
-                    value = "Fake repositories active",
-                    supportingText = "Room is wired as @RealRepository but not default yet",
+                    title = stringResource(R.string.settings_repository_source),
+                    value = stringResource(R.string.settings_fake_repositories_active),
+                    supportingText = stringResource(R.string.settings_repository_supporting),
                 )
                 ReadOnlyInfoRow(
                     iconResId = R.drawable.ic_app_smile,
-                    title = "Build track",
-                    value = "Pre-prod cleanup",
-                    supportingText = "Settings are persisted with DataStore",
+                    title = stringResource(R.string.settings_build_track),
+                    value = stringResource(R.string.settings_pre_prod_cleanup),
+                    supportingText = stringResource(R.string.settings_datastore_supporting),
                 )
                 OutlinedButton(
                     onClick = { onAction(MeAction.ResetDefaults) },
@@ -281,7 +284,7 @@ private fun MeSuccessContent(
                         .fillMaxWidth()
                         .padding(horizontal = MeSpacing.Large, vertical = MeSpacing.Small),
                 ) {
-                    Text("Reset settings")
+                    Text(stringResource(R.string.settings_reset))
                 }
             }
         }
@@ -324,14 +327,18 @@ private fun MeHeaderCard(settings: AppSettings) {
 
             Column(verticalArrangement = Arrangement.spacedBy(MeSpacing.Small)) {
                 Text(
-                    text = "Smart Scheduler",
+                    text = stringResource(R.string.settings_app_title),
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 )
                 Text(
                     text = if (settings.isValidWorkday) {
-                        "Planning ${settings.workDayStart.format(SettingsTimeFormatter)}-${settings.workDayEnd.format(SettingsTimeFormatter)}"
+                        stringResource(
+                            R.string.settings_planning_range,
+                            formatSettingsTime(settings.workDayStart),
+                            formatSettingsTime(settings.workDayEnd),
+                        )
                     } else {
-                        "Workday needs attention"
+                        stringResource(R.string.settings_workday_attention)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -386,7 +393,7 @@ private fun ThemeModeSelector(
                 shape = SegmentedButtonDefaults.itemShape(index, ThemeMode.entries.size),
                 label = {
                     Text(
-                        text = themeMode.label,
+                        text = themeMode.label(),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -450,9 +457,9 @@ private fun SettingsActionRow(
 @Composable
 private fun WorkdaySummary(settings: AppSettings) {
     val text = if (settings.isValidWorkday) {
-        "${formatDuration(settings.workdayDuration)} available for Smart Reschedule"
+        stringResource(R.string.settings_workday_available, formatDuration(settings.workdayDuration))
     } else {
-        "Start must be before end"
+        stringResource(R.string.settings_workday_invalid)
     }
     Text(
         text = text,
@@ -548,12 +555,12 @@ private fun SettingsTimePickerDialog(
         title = { Text(title) },
         confirmButton = {
             TextButton(onClick = { onConfirm(LocalTime.of(state.hour, state.minute)) }) {
-                Text("OK")
+                Text(stringResource(R.string.common_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         },
     ) {
@@ -581,21 +588,30 @@ private fun MeErrorContent(message: String) {
     }
 }
 
-private val ThemeMode.label: String
-    get() = when (this) {
-        ThemeMode.SYSTEM -> "System"
-        ThemeMode.LIGHT -> "Light"
-        ThemeMode.DARK -> "Dark"
+@Composable
+private fun ThemeMode.label(): String {
+    return when (this) {
+        ThemeMode.SYSTEM -> stringResource(R.string.settings_theme_system)
+        ThemeMode.LIGHT -> stringResource(R.string.settings_theme_light)
+        ThemeMode.DARK -> stringResource(R.string.settings_theme_dark)
     }
+}
 
+@Composable
+private fun formatSettingsTime(time: LocalTime): String {
+    val pattern = stringResource(R.string.time_format_24h)
+    return time.format(DateTimeFormatter.ofPattern(pattern))
+}
+
+@Composable
 private fun formatDuration(duration: Duration): String {
     val hours = duration.toHours()
     val minutes = duration.minusHours(hours).toMinutes()
 
     return when {
-        hours > 0 && minutes > 0 -> "${hours}h ${minutes}m"
-        hours > 0 -> "${hours}h"
-        else -> "${minutes.coerceAtLeast(0)}m"
+        hours > 0 && minutes > 0 -> stringResource(R.string.common_hour_minute, hours, minutes)
+        hours > 0 -> stringResource(R.string.common_hour, hours)
+        else -> stringResource(R.string.common_minute, minutes.coerceAtLeast(0))
     }
 }
 

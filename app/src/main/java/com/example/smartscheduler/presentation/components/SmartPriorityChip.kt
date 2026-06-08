@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.smartscheduler.R
@@ -35,21 +36,21 @@ fun SmartPriorityChip(
 ) {
     val (text, containerColor, contentColor, iconId) = when (priority) {
         Priority.HIGH -> PriorityVisuals(
-            text = "High",
+            text = stringResource(R.string.priority_high),
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
             iconId = R.drawable.ic_app_task_chip_priority_warning
         )
 
         Priority.MEDIUM -> PriorityVisuals(
-            text = "Medium",
+            text = stringResource(R.string.priority_medium),
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
             iconId = R.drawable.ic_app_task_chip_priority_medium
         )
 
         Priority.LOW -> PriorityVisuals(
-            text = "Low",
+            text = stringResource(R.string.priority_low),
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             iconId = R.drawable.ic_app_task_chip_priority_low

@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.smartscheduler.R
@@ -63,7 +64,8 @@ private fun FastAddEventChipsRow(
     defaultTimeSlot: TimeSlot,
     onChipClick: () -> Unit,
 ) {
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("H:mm") }
+    val timePattern = stringResource(R.string.time_format_24h)
+    val timeFormatter = remember(timePattern) { DateTimeFormatter.ofPattern(timePattern) }
 
     Row(
         modifier = modifier,
@@ -94,8 +96,11 @@ private fun FastAddEventChipsRow(
             },
             label = {
                 Text(
-                    text = "${defaultTimeSlot.startTime.format(timeFormatter)} - " +
+                    text = stringResource(
+                        R.string.common_time_range,
+                        defaultTimeSlot.startTime.format(timeFormatter),
                         defaultTimeSlot.endTime.format(timeFormatter),
+                    ),
                     style = MaterialTheme.typography.labelLarge
                 )
             }

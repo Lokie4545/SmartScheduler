@@ -1,7 +1,9 @@
 package com.example.smartscheduler.presentation.today
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartscheduler.R
 import com.example.smartscheduler.domain.algorithm.toDefaultEventSlot
 import com.example.smartscheduler.domain.model.Event
 import com.example.smartscheduler.domain.model.Priority
@@ -13,6 +15,7 @@ import com.example.smartscheduler.domain.repository.EventRepository
 import com.example.smartscheduler.domain.repository.SettingsRepository
 import com.example.smartscheduler.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -30,6 +33,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TodayViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val taskRepository: TaskRepository,
     private val eventRepository: EventRepository,
     private val settingsRepository: SettingsRepository,
@@ -79,7 +83,7 @@ class TodayViewModel @Inject constructor(
                 emit(
                     TodayUiState.Error(
                         currentDate = currentDate,
-                        message = ex.message ?: "Unknown Error"
+                        message = ex.message ?: context.getString(R.string.today_error_fallback)
                     )
                 )
             }

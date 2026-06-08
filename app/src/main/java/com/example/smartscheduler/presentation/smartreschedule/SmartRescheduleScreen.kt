@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -119,7 +120,9 @@ fun SmartRescheduleScreen(
                     message = uiState.message,
                     onRetry = { onAction(SmartRescheduleAction.Retry) },
                 )
-                is SmartRescheduleUiState.Empty -> SmartRescheduleMessageContent("No changes proposed")
+                is SmartRescheduleUiState.Empty -> SmartRescheduleMessageContent(
+                    stringResource(R.string.smart_reschedule_no_changes)
+                )
                 is SmartRescheduleUiState.Success -> SmartRescheduleDiffContent(
                     uiState = uiState,
                     onAction = onAction,
@@ -209,7 +212,7 @@ private fun SmartRescheduleDiffContent(
         if (unscheduledDeferredChanges.isNotEmpty()) {
             item(key = "deferred_backlog_section") {
                 SmartRescheduleSectionHeader(
-                    title = "Still in backlog",
+                    title = stringResource(R.string.smart_reschedule_still_backlog),
                     iconResId = R.drawable.ic_app_circle_minus,
                 )
             }
@@ -245,12 +248,12 @@ private fun SmartRescheduleHeader(
             IconButton(onClick = onClose) {
                 Icon(
                     painter = painterResource(R.drawable.ic_app_close),
-                    contentDescription = "Cancel smart reschedule",
+                    contentDescription = stringResource(R.string.smart_reschedule_cancel_content_description),
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
             Text(
-                text = "Proposed Schedule",
+                text = stringResource(R.string.smart_reschedule_proposed_schedule),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -316,13 +319,16 @@ private fun SmartRescheduleChangeCard(
             .height(SmartRescheduleDimensions.CardHeight),
         containerColor = change.containerColor(),
         leadingContent = {
-            SmartRescheduleStatusChip(change.type.label)
+            SmartRescheduleStatusChip(change.type.label())
         },
         trailingContent = {
             IconButton(onClick = onReject) {
                 Icon(
                     painter = painterResource(R.drawable.ic_app_undo),
-                    contentDescription = "Reject change for ${change.taskName}",
+                    contentDescription = stringResource(
+                        R.string.smart_reschedule_reject_content_description,
+                        change.taskName,
+                    ),
                     modifier = Modifier.size(SmartRescheduleDimensions.ActionIcon),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -379,7 +385,10 @@ private fun SmartRescheduleRejectedCard(
             IconButton(onClick = onRestore) {
                 Icon(
                     painter = painterResource(R.drawable.ic_app_plus_circle),
-                    contentDescription = "Restore change for ${change.taskName}",
+                    contentDescription = stringResource(
+                        R.string.smart_reschedule_restore_content_description,
+                        change.taskName,
+                    ),
                     modifier = Modifier.size(SmartRescheduleDimensions.ActionIcon),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -396,9 +405,9 @@ private fun SmartRescheduleRejectedCard(
         )
         Text(
             text = if (change.type == SmartRescheduleChangeType.ADDED || change.oldStartTime == null) {
-                "Task returned in backlog"
+                stringResource(R.string.smart_reschedule_task_returned_backlog)
             } else {
-                "Previous slot restored"
+                stringResource(R.string.smart_reschedule_previous_slot_restored)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -466,9 +475,9 @@ private fun SmartRescheduleBottomActions(
             )
             Text(
                 text = if (uiState is SmartRescheduleUiState.Success && uiState.isApplying) {
-                    "Applying..."
+                    stringResource(R.string.smart_reschedule_applying)
                 } else {
-                    "Apply schedule"
+                    stringResource(R.string.smart_reschedule_apply)
                 },
                 modifier = Modifier.padding(start = SmartRescheduleSpacing.Small),
             )
@@ -489,7 +498,7 @@ private fun SmartRescheduleBottomActions(
                 modifier = Modifier.size(ButtonDefaults.IconSize),
             )
             Text(
-                text = "Cancel",
+                text = stringResource(R.string.common_cancel),
                 modifier = Modifier.padding(start = SmartRescheduleSpacing.Small),
             )
         }
@@ -529,20 +538,22 @@ private fun SmartRescheduleMessageContent(
             )
             if (onRetry != null) {
                 Button(onClick = onRetry) {
-                    Text("Retry")
+                    Text(stringResource(R.string.common_retry))
                 }
             }
         }
     }
 }
 
-private val SmartRescheduleChangeType.label: String
-    get() = when (this) {
-        SmartRescheduleChangeType.ADDED -> "Added"
-        SmartRescheduleChangeType.MOVED -> "Moved"
-        SmartRescheduleChangeType.DEFERRED -> "Deferred"
-        SmartRescheduleChangeType.UNCHANGED -> "Unchanged"
+@Composable
+private fun SmartRescheduleChangeType.label(): String {
+    return when (this) {
+        SmartRescheduleChangeType.ADDED -> stringResource(R.string.smart_reschedule_status_added)
+        SmartRescheduleChangeType.MOVED -> stringResource(R.string.smart_reschedule_status_moved)
+        SmartRescheduleChangeType.DEFERRED -> stringResource(R.string.smart_reschedule_status_deferred)
+        SmartRescheduleChangeType.UNCHANGED -> stringResource(R.string.smart_reschedule_status_unchanged)
     }
+}
 
 @Composable
 private fun SmartRescheduleChangeUiModel.containerColor(): Color {

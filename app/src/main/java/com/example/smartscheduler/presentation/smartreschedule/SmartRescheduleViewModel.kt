@@ -1,7 +1,9 @@
 package com.example.smartscheduler.presentation.smartreschedule
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartscheduler.R
 import com.example.smartscheduler.domain.model.AppSettings
 import com.example.smartscheduler.domain.model.DiffItem
 import com.example.smartscheduler.domain.model.Event
@@ -16,6 +18,7 @@ import com.example.smartscheduler.domain.usecase.ApplyRescheduleUseCase
 import com.example.smartscheduler.domain.usecase.PreviewRescheduleDayUseCase
 import com.example.smartscheduler.domain.usecase.ReschedulePreviewResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,6 +35,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SmartRescheduleViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     taskRepository: TaskRepository,
     eventRepository: EventRepository,
     settingsRepository: SettingsRepository,
@@ -133,7 +137,7 @@ class SmartRescheduleViewModel @Inject constructor(
             currentPreview = null
             return SmartRescheduleUiState.Error(
                 currentDate = currentDate,
-                message = "Workday start must be before workday end",
+                message = context.getString(R.string.smart_reschedule_workday_error),
             )
         }
 
@@ -165,7 +169,7 @@ class SmartRescheduleViewModel @Inject constructor(
             currentPreview = null
             SmartRescheduleUiState.Error(
                 currentDate = currentDate,
-                message = error.message ?: "Unable to calculate smart schedule",
+                message = error.message ?: context.getString(R.string.smart_reschedule_calculate_error),
             )
         }
     }
@@ -212,7 +216,7 @@ class SmartRescheduleViewModel @Inject constructor(
                 _effects.emit(SmartRescheduleEffect.NavigateBack)
             }.onFailure { error ->
                 isApplying.value = false
-                applyError.value = error.message ?: "Unable to apply smart schedule"
+                applyError.value = error.message ?: context.getString(R.string.smart_reschedule_apply_error)
             }
         }
     }
@@ -313,8 +317,8 @@ class SmartRescheduleViewModel @Inject constructor(
                 else -> proposedTask?.endTime
             },
             reason = when (this) {
-                is DiffItem.Deferred -> "Placed in the nearest free future slot"
-                is DiffItem.Evicted -> "Doesn't fit in working hours"
+                is DiffItem.Deferred -> context.getString(R.string.smart_reschedule_reason_future_slot)
+                is DiffItem.Evicted -> context.getString(R.string.smart_reschedule_reason_no_fit_today)
                 else -> buildReason(changeType, sourceTask?.deadline)
             },
             isRejected = taskId in rejectedTaskIds,
@@ -327,12 +331,16 @@ class SmartRescheduleViewModel @Inject constructor(
     ): String {
         return when (changeType) {
             SmartRescheduleChangeType.ADDED -> {
-                if (deadline?.toLocalDate() == currentDate) "Deadline today" else "Fits in a free workday window"
+                if (deadline?.toLocalDate() == currentDate) {
+                    context.getString(R.string.smart_reschedule_reason_deadline_today)
+                } else {
+                    context.getString(R.string.smart_reschedule_reason_free_window)
+                }
             }
 
-            SmartRescheduleChangeType.MOVED -> "Freeing up a higher-priority slot"
-            SmartRescheduleChangeType.DEFERRED -> "Placed in the nearest free future slot"
-            SmartRescheduleChangeType.UNCHANGED -> "Already fits the proposed schedule"
+            SmartRescheduleChangeType.MOVED -> context.getString(R.string.smart_reschedule_reason_move_priority)
+            SmartRescheduleChangeType.DEFERRED -> context.getString(R.string.smart_reschedule_reason_future_slot)
+            SmartRescheduleChangeType.UNCHANGED -> context.getString(R.string.smart_reschedule_reason_unchanged)
         }
     }
 

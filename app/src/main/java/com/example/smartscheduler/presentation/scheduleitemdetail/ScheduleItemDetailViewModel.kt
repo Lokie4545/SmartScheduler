@@ -1,7 +1,9 @@
 package com.example.smartscheduler.presentation.scheduleitemdetail
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartscheduler.R
 import com.example.smartscheduler.domain.model.Event
 import com.example.smartscheduler.domain.model.Priority
 import com.example.smartscheduler.domain.model.ScheduledTask
@@ -12,6 +14,7 @@ import com.example.smartscheduler.domain.repository.EventRepository
 import com.example.smartscheduler.domain.repository.SettingsRepository
 import com.example.smartscheduler.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -29,6 +32,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ScheduleItemDetailViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val taskRepository: TaskRepository,
     private val eventRepository: EventRepository,
     private val settingsRepository: SettingsRepository,
@@ -145,7 +149,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
     private fun loadExistingItem(args: ScheduleItemDetailArgs) {
         val itemId = args.itemId
         if (itemId == null) {
-            _uiState.value = ScheduleItemDetailUiState.Error("Missing item id")
+            _uiState.value = ScheduleItemDetailUiState.Error(context.getString(R.string.detail_missing_item_id))
             return
         }
 
@@ -158,14 +162,14 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 }
             }.onFailure { error ->
                 _uiState.value = ScheduleItemDetailUiState.Error(
-                    error.message ?: "Unable to load item"
+                    error.message ?: context.getString(R.string.detail_load_error)
                 )
             }
         }
     }
 
     private suspend fun loadTask(taskId: String) {
-        val task = taskRepository.getTask(taskId) ?: error("Task not found")
+        val task = taskRepository.getTask(taskId) ?: error(context.getString(R.string.detail_task_not_found))
         val settings = settingsRepository.settingsStream.first()
         originalTask = task
 
@@ -211,7 +215,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
     }
 
     private suspend fun loadEvent(eventId: String) {
-        val event = eventRepository.getEvent(eventId) ?: error("Event not found")
+        val event = eventRepository.getEvent(eventId) ?: error(context.getString(R.string.detail_event_not_found))
         val settings = settingsRepository.settingsStream.first()
         val content = ScheduleItemDetailUiState.Content(
             mode = ScheduleItemDetailMode.EDIT,
@@ -248,7 +252,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
             }.onSuccess {
                 navigateBack()
             }.onFailure { error ->
-                showContentError(error.message ?: "Unable to save item")
+                showContentError(error.message ?: context.getString(R.string.detail_save_error))
             }
         }
     }
@@ -270,7 +274,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
 
     private suspend fun saveEvent(content: ScheduleItemDetailUiState.Content) {
         require(content.eventStartTime.isBefore(content.eventEndTime)) {
-            "End time must be after start time"
+            context.getString(R.string.detail_end_after_start)
         }
 
         val event = Event(
@@ -303,7 +307,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
             }.onSuccess {
                 navigateBack()
             }.onFailure { error ->
-                showContentError(error.message ?: "Unable to delete item")
+                showContentError(error.message ?: context.getString(R.string.detail_delete_error))
             }
         }
     }
@@ -325,7 +329,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
             }.onSuccess {
                 navigateBack()
             }.onFailure { error ->
-                showContentError(error.message ?: "Unable to update task")
+                showContentError(error.message ?: context.getString(R.string.detail_update_error))
             }
         }
     }

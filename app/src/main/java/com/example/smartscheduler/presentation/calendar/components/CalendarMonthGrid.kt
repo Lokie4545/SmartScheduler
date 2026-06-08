@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,11 +26,10 @@ import com.example.smartscheduler.presentation.calendar.CalendarDayMarker
 import com.example.smartscheduler.presentation.calendar.CalendarDayUiModel
 import com.example.smartscheduler.presentation.calendar.buildCalendarMonthDays
 import com.example.smartscheduler.ui.theme.SmartSchedulerTheme
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-
-private val MondayFirstWeekdayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
-private val SundayFirstWeekdayLabels = listOf("S", "M", "T", "W", "T", "F", "S")
+import java.time.format.TextStyle
 
 @Composable
 fun CalendarMonthGrid(
@@ -38,7 +38,7 @@ fun CalendarMonthGrid(
     onDateClick: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val weekdayLabels = if (weekStartsOnMonday) MondayFirstWeekdayLabels else SundayFirstWeekdayLabels
+    val weekdayLabels = rememberWeekdayLabels(weekStartsOnMonday)
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -70,6 +70,19 @@ fun CalendarMonthGrid(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun rememberWeekdayLabels(weekStartsOnMonday: Boolean): List<String> {
+    val locale = LocalLocale.current.platformLocale
+    return androidx.compose.runtime.remember(weekStartsOnMonday, locale) {
+        val days = if (weekStartsOnMonday) {
+            DayOfWeek.entries
+        } else {
+            listOf(DayOfWeek.SUNDAY) + DayOfWeek.entries.dropLast(1)
+        }
+        days.map { it.getDisplayName(TextStyle.NARROW_STANDALONE, locale) }
     }
 }
 

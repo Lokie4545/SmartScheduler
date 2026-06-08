@@ -1,7 +1,9 @@
 package com.example.smartscheduler.presentation.calendar
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartscheduler.R
 import com.example.smartscheduler.domain.model.AppSettings
 import com.example.smartscheduler.domain.model.Event
 import com.example.smartscheduler.domain.model.Priority
@@ -13,6 +15,7 @@ import com.example.smartscheduler.domain.repository.EventRepository
 import com.example.smartscheduler.domain.repository.SettingsRepository
 import com.example.smartscheduler.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +41,7 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val taskRepository: TaskRepository,
     private val eventRepository: EventRepository,
     private val settingsRepository: SettingsRepository,
@@ -76,7 +80,7 @@ class CalendarViewModel @Inject constructor(
                 emit(
                     CalendarUiState.Error(
                         selectedDate = selectedDate.value,
-                        message = error.message ?: "Unable to load calendar",
+                        message = error.message ?: context.getString(R.string.calendar_error_fallback),
                     )
                 )
             }

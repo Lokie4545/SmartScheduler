@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,7 +67,7 @@ fun LazyListScope.calendarAgendaItems(
     if (items.isEmpty()) {
         item(key = "agenda_empty") {
             Text(
-                text = "No tasks or events for this day",
+                text = stringResource(R.string.calendar_empty_day),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -243,23 +244,30 @@ private data class PriorityIconVisuals(
     val tint: Color,
 )
 
+@Composable
 private fun formatAgendaTime(
     startTime: LocalDateTime,
     endTime: LocalDateTime,
     duration: Duration,
 ): String {
-    val formatter = DateTimeFormatter.ofPattern("H:mm")
-    return "${startTime.format(formatter)} - ${endTime.format(formatter)} • ${formatDuration(duration)}"
+    val formatter = DateTimeFormatter.ofPattern(stringResource(R.string.time_format_24h))
+    return stringResource(
+        R.string.common_time_range_duration,
+        startTime.format(formatter),
+        endTime.format(formatter),
+        formatDuration(duration),
+    )
 }
 
+@Composable
 private fun formatDuration(duration: Duration): String {
     val hours = duration.toHours()
     val minutes = duration.minusHours(hours).toMinutes()
 
     return when {
-        hours > 0 && minutes > 0 -> "${hours} h ${minutes} min"
-        hours > 0 -> "$hours h"
-        else -> "${minutes.coerceAtLeast(0)} min"
+        hours > 0 && minutes > 0 -> stringResource(R.string.common_hour_minute, hours, minutes)
+        hours > 0 -> stringResource(R.string.common_hour, hours)
+        else -> stringResource(R.string.common_minute, minutes.coerceAtLeast(0))
     }
 }
 

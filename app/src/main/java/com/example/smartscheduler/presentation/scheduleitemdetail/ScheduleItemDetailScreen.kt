@@ -64,7 +64,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -82,7 +84,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 private object DetailSpacing {
     val ExtraSmall = 4.dp
@@ -105,8 +106,6 @@ private object DetailDimensions {
     val PriorityChipWidth = 120.dp
 }
 
-private val DetailDateFormatter = DateTimeFormatter.ofPattern("EEE, MMM d, yyyy", Locale.getDefault())
-private val DetailTimeFormatter = DateTimeFormatter.ofPattern("H:mm", Locale.getDefault())
 private const val DescriptionCollapsedMaxLines = 4
 private const val DescriptionExpandedMaxLines = 8
 private const val DescriptionCollapsedLengthThreshold = 120
@@ -245,12 +244,12 @@ fun ScheduleItemDetailScreen(
                             },
                             enabled = confirmEnabled.value,
                         ) {
-                            Text("OK")
+                            Text(stringResource(R.string.common_ok))
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { dialogState = DetailDialogState.None }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.common_cancel))
                         }
                     },
                 ) {
@@ -275,7 +274,7 @@ fun ScheduleItemDetailScreen(
         DetailDialogState.PickTaskStartTime -> {
             if (content != null) {
                 TimePickerForTargetDialog(
-                    title = "Task start time",
+                    title = stringResource(R.string.detail_task_start_time),
                     currentTime = content.taskStartTime ?: LocalTime.now(),
                     onConfirm = { time ->
                         onAction(ScheduleItemDetailAction.TaskStartTimeChanged(time))
@@ -315,9 +314,9 @@ fun ScheduleItemDetailScreen(
 
                 TimePickerForTargetDialog(
                     title = if (state.target == ScheduleItemTimeTarget.EVENT_START) {
-                        "Event start time"
+                        stringResource(R.string.detail_event_start_time)
                     } else {
-                        "Event end time"
+                        stringResource(R.string.detail_event_end_time)
                     },
                     currentTime = currentTime,
                     onConfirm = { time ->
@@ -352,7 +351,7 @@ private fun ScheduleItemTopBar(
             IconButton(onClick = { onAction(ScheduleItemDetailAction.Close) }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_app_close),
-                    contentDescription = "Close detail",
+                    contentDescription = stringResource(R.string.detail_close_content_description),
                 )
             }
         },
@@ -372,7 +371,11 @@ private fun ScheduleItemTopBar(
                     modifier = Modifier.size(ButtonDefaults.IconSize),
                 )
                 Text(
-                    text = if (content?.isSaving == true) "Saving..." else "Save",
+                    text = if (content?.isSaving == true) {
+                        stringResource(R.string.common_saving)
+                    } else {
+                        stringResource(R.string.common_save)
+                    },
                     modifier = Modifier.padding(start = DetailSpacing.Small),
                     style = MaterialTheme.typography.labelLarge,
                 )
@@ -417,7 +420,11 @@ private fun ScheduleItemDetailContent(
             textStyle = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             placeholder = {
                 Text(
-                    text = if (content.itemKind == ScheduleItemKind.EVENT) "Add event title" else "Add task title",
+                    text = if (content.itemKind == ScheduleItemKind.EVENT) {
+                        stringResource(R.string.detail_add_event_title)
+                    } else {
+                        stringResource(R.string.detail_add_task_title)
+                    },
                     style = MaterialTheme.typography.headlineMedium,
                 )
             },
@@ -443,7 +450,7 @@ private fun ScheduleItemDetailContent(
                     ),
                     label = {
                         Text(
-                            text = kind.title,
+                            text = kind.title(),
                             style = MaterialTheme.typography.labelLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -467,8 +474,8 @@ private fun ScheduleItemDetailContent(
         Column(verticalArrangement = Arrangement.spacedBy(DetailSpacing.Small)) {
             DetailListItem(
                 iconResId = R.drawable.ic_app_bottom_nav_calendar,
-                title = "Date",
-                value = content.date.format(DetailDateFormatter),
+                title = stringResource(R.string.detail_date),
+                value = formatDetailDate(content.date),
                 onClick = onOpenDatePicker,
             )
 
@@ -476,7 +483,7 @@ private fun ScheduleItemDetailContent(
                 ScheduleItemKind.TASK -> {
                     DetailListItem(
                         iconResId = R.drawable.ic_app_chip_clock,
-                        title = "Duration",
+                        title = stringResource(R.string.detail_duration),
                         value = if (content.isScheduledTask && content.taskStartTime != null) {
                             formatTimeRange(
                                 start = content.date.atTime(content.taskStartTime),
@@ -490,7 +497,7 @@ private fun ScheduleItemDetailContent(
 
                     DetailToggleItem(
                         iconResId = R.drawable.ic_app_lock,
-                        title = "Lock Task",
+                        title = stringResource(R.string.detail_lock_task),
                         checked = content.isLocked,
                         onCheckedChange = { onAction(ScheduleItemDetailAction.LockChanged(it)) },
                     )
@@ -506,7 +513,7 @@ private fun ScheduleItemDetailContent(
                 ScheduleItemKind.EVENT -> {
                     DetailListItem(
                         iconResId = R.drawable.ic_app_chip_clock,
-                        title = "Duration",
+                        title = stringResource(R.string.detail_duration),
                         value = formatTimeRange(
                             start = content.date.atTime(content.eventStartTime),
                             end = content.date.atTime(content.eventEndTime),
@@ -516,7 +523,7 @@ private fun ScheduleItemDetailContent(
 
                     if (!content.isEventTimeValid) {
                         Text(
-                            text = "End time must be after start time",
+                            text = stringResource(R.string.detail_end_after_start),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(start = DetailSpacing.ExtraLarge),
@@ -569,7 +576,7 @@ private fun DescriptionContent(
                 textStyle = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                 placeholder = {
                     Text(
-                        text = "Add description...",
+                        text = stringResource(R.string.detail_add_description),
                         style = MaterialTheme.typography.titleMedium,
                     )
                 },
@@ -586,7 +593,11 @@ private fun DescriptionContent(
             ) {
                 TextButton(onClick = { onExpandedChange(!expanded) }) {
                     Text(
-                        text = if (expanded) "Show less" else "View more",
+                        text = if (expanded) {
+                            stringResource(R.string.detail_show_less)
+                        } else {
+                            stringResource(R.string.detail_view_more)
+                        },
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
@@ -644,7 +655,7 @@ private fun PriorityRow(
 ) {
     DetailPropertyRow(
         iconResId = R.drawable.ic_app_general_priority,
-        title = "Priority",
+        title = stringResource(R.string.detail_priority),
         modifier = modifier,
     ) {
         SmartPriorityChip(
@@ -744,7 +755,7 @@ private fun ScheduleItemBottomActions(
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                         )
                         Text(
-                            text = "Delete",
+                            text = stringResource(R.string.common_delete),
                             modifier = Modifier.padding(start = DetailSpacing.Small),
                             style = MaterialTheme.typography.labelLarge,
                             maxLines = 1,
@@ -764,7 +775,11 @@ private fun ScheduleItemBottomActions(
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                         )
                         Text(
-                            text = content.completionButtonText,
+                            text = if (content.status == Status.COMPLETED) {
+                                stringResource(R.string.detail_mark_pending)
+                            } else {
+                                stringResource(R.string.detail_mark_completed)
+                            },
                             modifier = Modifier.padding(start = DetailSpacing.Small),
                             style = MaterialTheme.typography.labelLarge,
                             maxLines = 1,
@@ -791,7 +806,7 @@ private fun ScheduleItemBottomActions(
                         modifier = Modifier.size(ButtonDefaults.IconSize),
                     )
                     Text(
-                        text = "Delete",
+                        text = stringResource(R.string.common_delete),
                         modifier = Modifier.padding(start = DetailSpacing.Small),
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
@@ -833,10 +848,10 @@ private fun DetailErrorContent(
 
         Row(horizontalArrangement = Arrangement.spacedBy(DetailSpacing.Small)) {
             TextButton(onClick = onClose) {
-                Text("Close")
+                Text(stringResource(R.string.common_close))
             }
             Button(onClick = onRetry) {
-                Text("Retry")
+                Text(stringResource(R.string.common_retry))
             }
         }
     }
@@ -858,7 +873,7 @@ private fun DurationTimePickerDialog(
 
     TimePickerDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Task duration") },
+        title = { Text(stringResource(R.string.detail_task_duration)) },
         confirmButton = {
             TextButton(
                 onClick = {
@@ -869,12 +884,12 @@ private fun DurationTimePickerDialog(
                     }
                 },
             ) {
-                Text("OK")
+                Text(stringResource(R.string.common_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         },
     ) {
@@ -908,12 +923,12 @@ private fun TimePickerForTargetDialog(
                     onConfirm(LocalTime.of(state.hour, state.minute))
                 },
             ) {
-                Text("OK")
+                Text(stringResource(R.string.common_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         },
     ) {
@@ -933,38 +948,43 @@ private fun EventTimeChoiceDialog(
     onPickEnd: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val timeFormatter = DateTimeFormatter.ofPattern(
+        stringResource(R.string.time_format_24h),
+        LocalLocale.current.platformLocale,
+    )
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Event time") },
+        title = { Text(stringResource(R.string.detail_event_time)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(DetailSpacing.Small)) {
                 Text(
-                    text = "Edit the start or end time",
+                    text = stringResource(R.string.detail_event_time_supporting),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 ListItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onPickStart() },
-                    headlineContent = { Text("Start time") },
+                    headlineContent = { Text(stringResource(R.string.detail_start_time)) },
                     trailingContent = {
-                        Text(startTime.format(DetailTimeFormatter))
+                        Text(startTime.format(timeFormatter))
                     },
                 )
                 ListItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onPickEnd() },
-                    headlineContent = { Text("End time") },
+                    headlineContent = { Text(stringResource(R.string.detail_end_time)) },
                     trailingContent = {
-                        Text(endTime.format(DetailTimeFormatter))
+                        Text(endTime.format(timeFormatter))
                     },
                 )
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.common_close))
             }
         },
     )
@@ -983,27 +1003,46 @@ private fun detailTextFieldColors() = TextFieldDefaults.colors(
     cursorColor = MaterialTheme.colorScheme.primary,
 )
 
+@Composable
 private fun formatDuration(duration: Duration): String {
     val hours = duration.toHours()
     val minutes = duration.minusHours(hours).toMinutes()
 
     return when {
-        hours > 0 && minutes > 0 -> "${hours} hr ${minutes} min"
-        hours > 0 -> if (hours == 1L) "1 hr" else "${hours} hr"
-        else -> "${minutes.coerceAtLeast(0)} min"
+        hours > 0 && minutes > 0 -> stringResource(R.string.common_hour_minute, hours, minutes)
+        hours > 0 -> stringResource(R.string.common_hour, hours)
+        else -> stringResource(R.string.common_minute, minutes.coerceAtLeast(0))
     }
 }
 
+@Composable
 private fun formatTimeRange(start: LocalDateTime, end: LocalDateTime): String {
     val duration = Duration.between(start, end).abs()
-    return "${start.toLocalTime().format(DetailTimeFormatter)} - ${end.toLocalTime().format(DetailTimeFormatter)} • ${formatDuration(duration)}"
+    val timeFormatter = DateTimeFormatter.ofPattern(
+        stringResource(R.string.time_format_24h),
+        LocalLocale.current.platformLocale,
+    )
+    return stringResource(
+        R.string.common_time_range_duration,
+        start.toLocalTime().format(timeFormatter),
+        end.toLocalTime().format(timeFormatter),
+        formatDuration(duration),
+    )
 }
 
-private val ScheduleItemKind.title: String
-    get() = when (this) {
-        ScheduleItemKind.TASK -> "Task"
-        ScheduleItemKind.EVENT -> "Event"
+@Composable
+private fun formatDetailDate(date: LocalDate): String {
+    val pattern = stringResource(R.string.date_format_detail)
+    return date.format(DateTimeFormatter.ofPattern(pattern, LocalLocale.current.platformLocale))
+}
+
+@Composable
+private fun ScheduleItemKind.title(): String {
+    return when (this) {
+        ScheduleItemKind.TASK -> stringResource(R.string.detail_task_kind)
+        ScheduleItemKind.EVENT -> stringResource(R.string.detail_event_kind)
     }
+}
 
 private fun Priority.nextPriority(): Priority {
     return when (this) {
