@@ -21,10 +21,28 @@
 
 ## 📱 Screenshots
 
-<p align="center">
-  <strong>Screenshots are not committed yet.</strong><br>
-  Add images to <code>assets/</code> and reference them here when production UI captures are ready.
-</p>
+<table>
+  <tr>
+    <td align="center">
+      <img src="assets/03-today.jpeg" alt="Today screen" width="220"/><br>
+      <strong>Today</strong>
+    </td>
+    <td align="center">
+      <img src="assets/01-fast-add.jpg" alt="Fast add task sheet" width="220"/><br>
+      <strong>Fast Add</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="assets/02-task-detail.jpeg" alt="Task detail screen" width="220"/><br>
+      <strong>Task Detail</strong>
+    </td>
+    <td align="center">
+      <img src="assets/04-calendar.jpeg" alt="Calendar screen" width="220"/><br>
+      <strong>Calendar</strong>
+    </td>
+  </tr>
+</table>
 
 ---
 
