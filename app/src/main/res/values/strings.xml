@@ -8,6 +8,7 @@
     <string name="common_save">Сохранить</string>
     <string name="common_saving">Сохранение…</string>
     <string name="common_delete">Удалить</string>
+    <string name="common_add_lowercase">добавить</string>
     <string name="common_today">Сегодня</string>
     <string name="common_tomorrow">Завтра</string>
     <string name="common_yesterday">Вчера</string>
@@ -34,6 +35,7 @@
     <string name="today_empty_description">Отдохните или выберите задачи из бэклога, а Smart Reschedule найдет для них реалистичное окно.</string>
     <string name="today_unscheduled_total">~ %1$s всего</string>
     <string name="today_smart_reschedule_content_description">Умно запланировать задачи из бэклога</string>
+    <string name="today_task_deadline">Дедлайн: %1$s</string>
 
     <plurals name="today_unscheduled_title">
         <item quantity="one">%1$d незапланированная задача</item>
@@ -105,10 +107,10 @@
     <string name="settings_week_starts_monday_supporting">Сетка календаря следует вашей рабочей неделе</string>
     <string name="settings_mvp_status">Статус MVP</string>
     <string name="settings_repository_source">Источник данных</string>
-    <string name="settings_fake_repositories_active">Активны fake-репозитории</string>
-    <string name="settings_repository_supporting">Room подключен как @RealRepository, но пока не используется по умолчанию</string>
+    <string name="settings_room_repositories_active">Активно постоянное хранилище Room</string>
+    <string name="settings_repository_supporting">Задачи и события сохраняются в локальную базу данных приложения</string>
     <string name="settings_build_track">Сборка</string>
-    <string name="settings_pre_prod_cleanup">Подготовка к pre-prod</string>
+    <string name="settings_pre_prod_cleanup">Production data path</string>
     <string name="settings_datastore_supporting">Настройки сохраняются через DataStore</string>
     <string name="settings_reset">Сбросить настройки</string>
     <string name="settings_app_title">Умный планировщик</string>
@@ -135,6 +137,8 @@
     <string name="detail_add_event_title">Добавить название события</string>
     <string name="detail_add_task_title">Добавить название задачи</string>
     <string name="detail_date">Дата</string>
+    <string name="detail_schedule_date">Дата выполнения</string>
+    <string name="detail_deadline">Дедлайн</string>
     <string name="detail_duration">Длительность</string>
     <string name="detail_lock_task">Закрепить задачу</string>
     <string name="detail_priority">Приоритет</string>
@@ -154,20 +158,6 @@
     <string name="detail_task_kind">Задача</string>
     <string name="detail_event_kind">Событие</string>
     <string name="detail_hour_one">1 ч</string>
-
-    <string name="fake_task_buy_milk">Купить молоко</string>
-    <string name="fake_task_buy_milk_description">Нужно купить 2 л молока в Магните</string>
-    <string name="fake_task_project_meeting">Встреча по проекту</string>
-    <string name="fake_task_project_meeting_description">Обсуждение архитектуры приложения</string>
-    <string name="fake_task_gym">Зал</string>
-    <string name="fake_task_gym_description">Тренировка ног</string>
-    <string name="fake_task_email_check">Проверка почты</string>
-    <string name="fake_task_urgent_bugfix">Срочный багфикс</string>
-    <string name="fake_task_urgent_bugfix_description">Починить крэш на главном экране</string>
-    <string name="fake_event_lunch">Обед</string>
-    <string name="fake_event_lunch_description">Перерыв между задачами</string>
-    <string name="fake_event_call">Созвон</string>
-    <string name="fake_event_call_description">Синхронизация по плану дня</string>
 
     <string name="date_format_full">EEEE, MMM d</string>
     <string name="date_format_short">MMM d</string>

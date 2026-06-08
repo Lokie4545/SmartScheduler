@@ -113,6 +113,7 @@ private const val DescriptionCollapsedLengthThreshold = 120
 private sealed interface DetailDialogState {
     data object None : DetailDialogState
     data object PickDate : DetailDialogState
+    data object PickDeadlineDate : DetailDialogState
     data object PickTaskDuration : DetailDialogState
     data object PickTaskStartTime : DetailDialogState
     data object PickEventTimeChoice : DetailDialogState
@@ -205,6 +206,7 @@ fun ScheduleItemDetailScreen(
                     content = uiState,
                     onAction = onAction,
                     onOpenDatePicker = { dialogState = DetailDialogState.PickDate },
+                    onOpenDeadlinePicker = { dialogState = DetailDialogState.PickDeadlineDate },
                     onOpenTaskDurationPicker = { dialogState = DetailDialogState.PickTaskDuration },
                     onOpenTaskStartTimePicker = { dialogState = DetailDialogState.PickTaskStartTime },
                     onOpenEventTimeChoice = { dialogState = DetailDialogState.PickEventTimeChoice },
@@ -240,6 +242,49 @@ fun ScheduleItemDetailScreen(
                                     .atZone(ZoneOffset.UTC)
                                     .toLocalDate()
                                 onAction(ScheduleItemDetailAction.DateChanged(selectedDate))
+                                dialogState = DetailDialogState.None
+                            },
+                            enabled = confirmEnabled.value,
+                        ) {
+                            Text(stringResource(R.string.common_ok))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { dialogState = DetailDialogState.None }) {
+                            Text(stringResource(R.string.common_cancel))
+                        }
+                    },
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
+        }
+
+        DetailDialogState.PickDeadlineDate -> {
+            if (content != null) {
+                val initialDate = content.deadlineDate ?: LocalDate.now()
+                val datePickerState = rememberDatePickerState(
+                    initialSelectedDateMillis = initialDate
+                        .atStartOfDay()
+                        .toInstant(ZoneOffset.UTC)
+                        .toEpochMilli(),
+                )
+                val confirmEnabled = remember(datePickerState) {
+                    androidx.compose.runtime.derivedStateOf {
+                        datePickerState.selectedDateMillis != null
+                    }
+                }
+
+                DatePickerDialog(
+                    onDismissRequest = { dialogState = DetailDialogState.None },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                val selectedMillis = datePickerState.selectedDateMillis ?: return@TextButton
+                                val selectedDate = Instant.ofEpochMilli(selectedMillis)
+                                    .atZone(ZoneOffset.UTC)
+                                    .toLocalDate()
+                                onAction(ScheduleItemDetailAction.DeadlineChanged(selectedDate))
                                 dialogState = DetailDialogState.None
                             },
                             enabled = confirmEnabled.value,
@@ -393,6 +438,7 @@ private fun ScheduleItemDetailContent(
     content: ScheduleItemDetailUiState.Content,
     onAction: (ScheduleItemDetailAction) -> Unit,
     onOpenDatePicker: () -> Unit,
+    onOpenDeadlinePicker: () -> Unit,
     onOpenTaskDurationPicker: () -> Unit,
     onOpenTaskStartTimePicker: () -> Unit,
     onOpenEventTimeChoice: () -> Unit,
@@ -472,15 +518,26 @@ private fun ScheduleItemDetailContent(
         Spacer(modifier = Modifier.height(DetailSpacing.Small))
 
         Column(verticalArrangement = Arrangement.spacedBy(DetailSpacing.Small)) {
-            DetailListItem(
-                iconResId = R.drawable.ic_app_bottom_nav_calendar,
-                title = stringResource(R.string.detail_date),
-                value = formatDetailDate(content.date),
-                onClick = onOpenDatePicker,
-            )
+            if (content.itemKind == ScheduleItemKind.EVENT || content.isScheduledTask) {
+                DetailListItem(
+                    iconResId = R.drawable.ic_app_bottom_nav_calendar,
+                    title = if (content.itemKind == ScheduleItemKind.TASK) {
+                        stringResource(R.string.detail_schedule_date)
+                    } else {
+                        stringResource(R.string.detail_date)
+                    },
+                    value = formatDetailDate(content.date),
+                    onClick = onOpenDatePicker,
+                )
+            }
 
             when (content.itemKind) {
                 ScheduleItemKind.TASK -> {
+                    DetailDeadlineItem(
+                        deadlineDate = content.deadlineDate,
+                        onClick = onOpenDeadlinePicker,
+                    )
+
                     DetailListItem(
                         iconResId = R.drawable.ic_app_chip_clock,
                         title = stringResource(R.string.detail_duration),
@@ -627,6 +684,34 @@ private fun DetailListItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Composable
+private fun DetailDeadlineItem(
+    deadlineDate: LocalDate?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    DetailPropertyRow(
+        iconResId = R.drawable.ic_app_bottom_nav_calendar,
+        title = stringResource(R.string.detail_deadline),
+        onClick = if (deadlineDate != null) onClick else null,
+        modifier = modifier,
+    ) {
+        if (deadlineDate == null) {
+            TextButton(onClick = onClick) {
+                Text(stringResource(R.string.common_add_lowercase))
+            }
+        } else {
+            Text(
+                text = formatDetailDate(deadlineDate),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -1064,6 +1149,7 @@ private fun CreateTaskDetailPreview() {
                 title = "Super Important Task",
                 description = "",
                 date = LocalDate.of(2026, 5, 10),
+                deadlineDate = null,
                 taskDuration = Duration.ofMinutes(75),
                 taskStartTime = null,
                 isScheduledTask = false,
@@ -1091,6 +1177,7 @@ private fun CreateEventDetailPreview() {
                 title = "Team sync",
                 description = "Discuss roadmap and blockers.",
                 date = LocalDate.of(2026, 5, 10),
+                deadlineDate = null,
                 taskDuration = Duration.ofMinutes(30),
                 taskStartTime = null,
                 isScheduledTask = false,
@@ -1118,6 +1205,7 @@ private fun EditTaskDetailPreview() {
                 title = "Super Important Task",
                 description = "Funny description provided Funny description provided Funny description provided",
                 date = LocalDate.of(2026, 5, 10),
+                deadlineDate = LocalDate.of(2026, 5, 12),
                 taskDuration = Duration.ofHours(2),
                 taskStartTime = LocalTime.of(12, 0),
                 isScheduledTask = true,

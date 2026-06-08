@@ -77,6 +77,10 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 it.copy(date = action.date)
             }
 
+            is ScheduleItemDetailAction.DeadlineChanged -> updateContent {
+                it.copy(deadlineDate = action.date)
+            }
+
             is ScheduleItemDetailAction.TaskDurationChanged -> updateContent {
                 it.copy(taskDuration = action.duration)
             }
@@ -131,6 +135,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 title = args.draftTitle,
                 description = args.draftDescription,
                 date = startTime.toLocalDate(),
+                deadlineDate = null,
                 taskDuration = initialDuration,
                 taskStartTime = if (createsScheduledTask) startTime.toLocalTime() else null,
                 isScheduledTask = createsScheduledTask,
@@ -181,6 +186,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 title = task.name,
                 description = task.description.orEmpty(),
                 date = task.startTime.toLocalDate(),
+                deadlineDate = task.deadline?.toLocalDate(),
                 taskDuration = task.duration,
                 taskStartTime = task.startTime.toLocalTime(),
                 isScheduledTask = true,
@@ -198,7 +204,8 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 itemId = task.id,
                 title = task.name,
                 description = task.description.orEmpty(),
-                date = task.deadline?.toLocalDate() ?: LocalDate.now(),
+                date = LocalDate.now(),
+                deadlineDate = task.deadline?.toLocalDate(),
                 taskDuration = task.duration ?: settings.defaultTaskDuration,
                 taskStartTime = null,
                 isScheduledTask = false,
@@ -224,6 +231,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
             title = event.name,
             description = event.description.orEmpty(),
             date = event.startTime.toLocalDate(),
+            deadlineDate = null,
             taskDuration = settings.defaultTaskDuration,
             taskStartTime = null,
             isScheduledTask = false,
@@ -394,7 +402,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 status = taskStatus,
                 priority = priority,
                 isLocked = isLocked,
-                deadline = existingTask?.deadline,
+                deadline = deadlineDate?.atTime(TaskDeadlineTime),
                 preferredPlaceTime = existingTask?.preferredPlaceTime,
                 startTime = startTime,
                 endTime = startTime.plus(taskDuration),
@@ -407,7 +415,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 status = taskStatus,
                 priority = priority,
                 isLocked = isLocked,
-                deadline = date.atTime(TaskDeadlineTime),
+                deadline = deadlineDate?.atTime(TaskDeadlineTime),
                 preferredPlaceTime = existingTask?.preferredPlaceTime,
                 duration = taskDuration,
             )

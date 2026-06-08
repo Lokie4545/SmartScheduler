@@ -67,6 +67,7 @@ import com.example.smartscheduler.presentation.today.components.SmartFabMenu
 import com.example.smartscheduler.ui.theme.SmartSchedulerTheme
 import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -632,6 +633,20 @@ private fun TodayTaskRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+        task.deadline?.let { deadline ->
+            Text(
+                text = stringResource(R.string.today_task_deadline, formatTaskDeadlineDate(deadline)),
+                style = MaterialTheme.typography.bodyMedium,
+                textDecoration = if (task.status == Status.COMPLETED) {
+                    TextDecoration.LineThrough
+                } else {
+                    null
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -658,6 +673,13 @@ private fun formatDuration(duration: Duration): String {
     }
 }
 
+@Composable
+private fun formatTaskDeadlineDate(deadline: LocalDateTime): String {
+    val datePattern = stringResource(R.string.date_format_short)
+    val formatter = remember(datePattern) { DateTimeFormatter.ofPattern(datePattern, Locale.getDefault()) }
+    return deadline.toLocalDate().format(formatter)
+}
+
 
 private fun previewTasks(date: LocalDate = LocalDate.of(2026, 9, 1)): List<ScheduledTask> {
     return listOf(
@@ -668,7 +690,7 @@ private fun previewTasks(date: LocalDate = LocalDate.of(2026, 9, 1)): List<Sched
             status = Status.SCHEDULED,
             priority = Priority.HIGH,
             isLocked = false,
-            deadline = null,
+            deadline = date.atTime(23, 59),
             preferredPlaceTime = null,
             startTime = date.atTime(10, 0),
             endTime = date.atTime(12, 0)

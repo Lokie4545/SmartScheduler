@@ -21,6 +21,7 @@ sealed interface ScheduleItemDetailAction {
     data class DescriptionChanged(val description: String) : ScheduleItemDetailAction
     data class KindChanged(val kind: ScheduleItemKind) : ScheduleItemDetailAction
     data class DateChanged(val date: LocalDate) : ScheduleItemDetailAction
+    data class DeadlineChanged(val date: LocalDate?) : ScheduleItemDetailAction
     data class TaskDurationChanged(val duration: Duration) : ScheduleItemDetailAction
     data class TaskStartTimeChanged(val time: LocalTime) : ScheduleItemDetailAction
     data class EventStartTimeChanged(val time: LocalTime) : ScheduleItemDetailAction

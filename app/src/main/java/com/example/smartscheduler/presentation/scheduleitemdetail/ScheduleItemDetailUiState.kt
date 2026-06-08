@@ -20,6 +20,7 @@ sealed interface ScheduleItemDetailUiState {
         val title: String,
         val description: String,
         val date: LocalDate,
+        val deadlineDate: LocalDate?,
         val taskDuration: Duration,
         val taskStartTime: LocalTime?,
         val isScheduledTask: Boolean,

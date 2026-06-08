@@ -46,6 +46,8 @@ fun TaskEntity.toDomain(): Task {
 
     val parsedPriority = Priority.valueOf(priority.uppercase())
 
+    val parsedDuration = duration?.let(Duration::ofMillis)
+
     return if (parsedEndTime != null && parsedStartTime != null) {
         ScheduledTask(
             id = id,
@@ -70,7 +72,7 @@ fun TaskEntity.toDomain(): Task {
             deadline = parsedDeadline,
             preferredPlaceTime = parsedPreferredPlaceTime,
             isLocked = isLocked,
-            duration = null,
+            duration = parsedDuration,
         )
     }
 
@@ -105,4 +107,3 @@ fun Task.toEntity() = when(this) {
         endTime = null,
     )
 }
-

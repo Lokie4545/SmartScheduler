@@ -16,6 +16,7 @@ interface TaskDao {
             AND endTime IS NOT NULL
             AND startTime < :endPeriod
             AND endTime > :startPeriod
+        ORDER BY startTime ASC, endTime ASC, id ASC
     """)
     fun observeTasks(
         startPeriod: Long,
@@ -26,6 +27,7 @@ interface TaskDao {
     @Query("""
         SELECT * FROM task
         WHERE startTime IS NULL AND endTime IS NULL
+        ORDER BY deadline IS NULL, deadline ASC, id ASC
     """
     )
     fun observeUnallocatedTasks() : Flow<List<TaskEntity>>
@@ -37,6 +39,7 @@ interface TaskDao {
             AND endTime IS NOT NULL
             AND startTime < :endPeriod
             AND endTime > :startPeriod
+        ORDER BY startTime ASC, endTime ASC, id ASC
     """)
     suspend fun getTasks(startPeriod: Long, endPeriod: Long): List<TaskEntity>
 
@@ -44,6 +47,7 @@ interface TaskDao {
     @Query("""
         SELECT * FROM task
         WHERE startTime IS NULL AND endTime IS NULL
+        ORDER BY deadline IS NULL, deadline ASC, id ASC
     """
     )
     suspend fun getUnallocatedTasks(): List<TaskEntity>

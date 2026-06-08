@@ -11,6 +11,7 @@ interface EventDao {
     @Query("""
         SELECT * FROM event
         WHERE startTime < :endPeriod AND endTime > :startPeriod
+        ORDER BY startTime ASC, endTime ASC, id ASC
     """)
     fun observeEvents(
         startPeriod: Long,
@@ -21,8 +22,9 @@ interface EventDao {
     @Query("""
         SELECT * FROM event
         WHERE startTime < :endPeriod AND endTime > :startPeriod
+        ORDER BY startTime ASC, endTime ASC, id ASC
     """)
-    fun getEvents(
+    suspend fun getEvents(
         startPeriod: Long,
         endPeriod: Long
     ): List<EventEntity>

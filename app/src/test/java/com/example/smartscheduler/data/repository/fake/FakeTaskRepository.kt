@@ -12,7 +12,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 class FakeTaskRepository(
-    initialTasks: List<Task> = emptyList()
+    initialTasks: List<Task> = emptyList(),
 ) : TaskRepository {
 
     private val tasksFlow = MutableStateFlow(initialTasks)
@@ -27,7 +27,7 @@ class FakeTaskRepository(
 
     override suspend fun getTasks(
         startTime: LocalDateTime,
-        endTime: LocalDateTime
+        endTime: LocalDateTime,
     ): List<Task> {
         return tasksFlow.value.filterIsInstance<ScheduledTask>()
             .filter { it.overlaps(startTime, endTime) }
@@ -36,7 +36,7 @@ class FakeTaskRepository(
     override suspend fun applyReschedule(tasks: List<Task>) {
         tasksFlow.update { currentTasks ->
             val taskMap = currentTasks.associateBy { it.id }.toMutableMap()
-            tasks.forEach { taskMap[it.id] = it }
+            tasks.forEach { task -> taskMap[task.id] = task }
             taskMap.values.toList()
         }
     }
@@ -44,16 +44,13 @@ class FakeTaskRepository(
     override suspend fun createTask(task: Task): String {
         tasksFlow.update { currentTasks ->
             val index = currentTasks.indexOfFirst { it.id == task.id }
-            if (index >= 0) currentTasks.toMutableList().apply { set(index, task) }
-            else currentTasks + task
+            if (index >= 0) currentTasks.toMutableList().apply { set(index, task) } else currentTasks + task
         }
         return task.id
     }
 
     override suspend fun deleteTask(taskId: String) {
-        tasksFlow.update { currentTasks ->
-            currentTasks.filterNot { it.id == taskId }
-        }
+        tasksFlow.update { currentTasks -> currentTasks.filterNot { it.id == taskId } }
     }
 
     override suspend fun updateTask(task: Task) {
@@ -63,10 +60,7 @@ class FakeTaskRepository(
     override fun getDayTasksStream(date: LocalDate): Flow<List<Task>> {
         val startTime = date.atStartOfDay()
         val endTime = date.plusDays(1).atStartOfDay()
-        return tasksFlow.map { tasks ->
-            tasks.filterIsInstance<ScheduledTask>()
-                .filter { it.overlaps(startTime, endTime) }
-        }
+        return observeTasks(startTime, endTime)
     }
 
     override fun observeTasks(startTime: LocalDateTime, endTime: LocalDateTime): Flow<List<Task>> {
@@ -77,9 +71,7 @@ class FakeTaskRepository(
     }
 
     override fun getUnallocatedTasksStream(): Flow<List<UnscheduledTask>> {
-        return tasksFlow.map { tasks ->
-            tasks.filterIsInstance<UnscheduledTask>()
-        }
+        return tasksFlow.map { tasks -> tasks.filterIsInstance<UnscheduledTask>() }
     }
 
     private fun ScheduledTask.overlaps(startTime: LocalDateTime, endTime: LocalDateTime): Boolean {

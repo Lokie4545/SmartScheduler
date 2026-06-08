@@ -264,30 +264,6 @@ private fun MeSuccessContent(
             }
         }
 
-        item(key = "mvp_status") {
-            SettingsCard(title = stringResource(R.string.settings_mvp_status)) {
-                ReadOnlyInfoRow(
-                    iconResId = R.drawable.ic_app_reschedule_magic,
-                    title = stringResource(R.string.settings_repository_source),
-                    value = stringResource(R.string.settings_fake_repositories_active),
-                    supportingText = stringResource(R.string.settings_repository_supporting),
-                )
-                ReadOnlyInfoRow(
-                    iconResId = R.drawable.ic_app_smile,
-                    title = stringResource(R.string.settings_build_track),
-                    value = stringResource(R.string.settings_pre_prod_cleanup),
-                    supportingText = stringResource(R.string.settings_datastore_supporting),
-                )
-                OutlinedButton(
-                    onClick = { onAction(MeAction.ResetDefaults) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = MeSpacing.Large, vertical = MeSpacing.Small),
-                ) {
-                    Text(stringResource(R.string.settings_reset))
-                }
-            }
-        }
     }
 }
 
