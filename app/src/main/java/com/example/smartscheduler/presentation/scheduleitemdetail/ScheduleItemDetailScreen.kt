@@ -518,14 +518,15 @@ private fun ScheduleItemDetailContent(
         Spacer(modifier = Modifier.height(DetailSpacing.Small))
 
         Column(verticalArrangement = Arrangement.spacedBy(DetailSpacing.Small)) {
-            if (content.itemKind == ScheduleItemKind.EVENT || content.isScheduledTask) {
-                DetailListItem(
+            when (content.itemKind) {
+                ScheduleItemKind.TASK -> DetailTaskScheduleDateItem(
+                    scheduleDate = if (content.isScheduledTask) content.date else null,
+                    onClick = onOpenDatePicker,
+                )
+
+                ScheduleItemKind.EVENT -> DetailListItem(
                     iconResId = R.drawable.ic_app_bottom_nav_calendar,
-                    title = if (content.itemKind == ScheduleItemKind.TASK) {
-                        stringResource(R.string.detail_schedule_date)
-                    } else {
-                        stringResource(R.string.detail_date)
-                    },
+                    title = stringResource(R.string.detail_date),
                     value = formatDetailDate(content.date),
                     onClick = onOpenDatePicker,
                 )
@@ -684,6 +685,34 @@ private fun DetailListItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Composable
+private fun DetailTaskScheduleDateItem(
+    scheduleDate: LocalDate?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    DetailPropertyRow(
+        iconResId = R.drawable.ic_app_bottom_nav_calendar,
+        title = stringResource(R.string.detail_schedule_date),
+        onClick = if (scheduleDate != null) onClick else null,
+        modifier = modifier,
+    ) {
+        if (scheduleDate == null) {
+            TextButton(onClick = onClick) {
+                Text(stringResource(R.string.common_add_lowercase))
+            }
+        } else {
+            Text(
+                text = formatDetailDate(scheduleDate),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

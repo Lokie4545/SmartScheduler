@@ -46,6 +46,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
 
     private var currentArgs: ScheduleItemDetailArgs? = null
     private var originalTask: Task? = null
+    private var defaultTaskStartTime: LocalTime = LocalTime.of(9, 0)
 
     fun initialize(args: ScheduleItemDetailArgs) {
         if (currentArgs == args) return
@@ -73,8 +74,17 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 if (it.canChangeKind) it.copy(itemKind = action.kind) else it
             }
 
-            is ScheduleItemDetailAction.DateChanged -> updateContent {
-                it.copy(date = action.date)
+            is ScheduleItemDetailAction.DateChanged -> updateContent { content ->
+                when (content.itemKind) {
+                    ScheduleItemKind.TASK -> content.copy(
+                        date = action.date,
+                        taskStartTime = content.taskStartTime ?: defaultTaskStartTime,
+                        isScheduledTask = true,
+                        status = if (content.status == Status.PENDING) Status.SCHEDULED else content.status,
+                    )
+
+                    ScheduleItemKind.EVENT -> content.copy(date = action.date)
+                }
             }
 
             is ScheduleItemDetailAction.DeadlineChanged -> updateContent {
@@ -117,6 +127,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
         _uiState.value = ScheduleItemDetailUiState.Loading
         viewModelScope.launch {
             val settings = settingsRepository.settingsStream.first()
+            defaultTaskStartTime = settings.workDayStart
             val now = LocalDateTime.now().withSecond(0).withNano(0)
             val startTime = args.draftStartTime ?: now
             val eventEndTime = args.draftEndTime ?: startTime.plus(settings.defaultEventDuration)
@@ -143,7 +154,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
                 eventEndTime = eventEndTime.toLocalTime(),
                 isLocked = false,
                 priority = Priority.MEDIUM,
-                status = Status.PENDING,
+                status = if (createsScheduledTask) Status.SCHEDULED else Status.PENDING,
                 canSave = false,
             )
 
@@ -176,6 +187,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
     private suspend fun loadTask(taskId: String) {
         val task = taskRepository.getTask(taskId) ?: error(context.getString(R.string.detail_task_not_found))
         val settings = settingsRepository.settingsStream.first()
+        defaultTaskStartTime = settings.workDayStart
         originalTask = task
 
         val content = when (task) {
@@ -224,6 +236,7 @@ class ScheduleItemDetailViewModel @Inject constructor(
     private suspend fun loadEvent(eventId: String) {
         val event = eventRepository.getEvent(eventId) ?: error(context.getString(R.string.detail_event_not_found))
         val settings = settingsRepository.settingsStream.first()
+        defaultTaskStartTime = settings.workDayStart
         val content = ScheduleItemDetailUiState.Content(
             mode = ScheduleItemDetailMode.EDIT,
             itemKind = ScheduleItemKind.EVENT,
@@ -390,7 +403,11 @@ class ScheduleItemDetailViewModel @Inject constructor(
         existingTask: Task?,
         statusOverride: Status?,
     ): Task {
-        val taskStatus = statusOverride ?: status
+        val taskStatus = statusOverride ?: if (isScheduledTask && status == Status.PENDING) {
+            Status.SCHEDULED
+        } else {
+            status
+        }
         val description = description.normalizedDescription()
 
         return if (isScheduledTask && taskStartTime != null) {
