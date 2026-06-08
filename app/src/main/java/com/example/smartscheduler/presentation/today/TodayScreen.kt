@@ -56,6 +56,7 @@ import com.example.smartscheduler.domain.model.TimeSlot
 import com.example.smartscheduler.presentation.components.SmartLoadingCircularIndicator
 import com.example.smartscheduler.presentation.components.SmartPriorityChip
 import com.example.smartscheduler.presentation.components.SmartTaskCard
+import com.example.smartscheduler.presentation.scheduleitemdetail.ScheduleItemKind
 import com.example.smartscheduler.presentation.smartreschedule.SmartReschedulePreviewBottomSheetRoute
 import com.example.smartscheduler.presentation.smartreschedule.SmartRescheduleViewModel
 import com.example.smartscheduler.presentation.today.components.FastAddEventBottomSheet
@@ -88,7 +89,8 @@ private object TodayDimensions {
 fun TodayRoute(
     viewModel: TodayViewModel,
     smartRescheduleViewModel: SmartRescheduleViewModel,
-    onNavigateToTaskDetail: (String, String) -> Unit,
+    onNavigateToScheduleItemCreate: (ScheduleItemKind, String, String, TimeSlot?) -> Unit,
+    onNavigateToScheduleItemEdit: (ScheduleItemKind, String) -> Unit,
     onNavigateToSmartRescheduleDiff: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -96,8 +98,17 @@ fun TodayRoute(
 
     TodayScreen(uiState = uiState) { action ->
         when (action) {
-            is TodayAction.NavigateToTaskDetail -> {
-                onNavigateToTaskDetail(action.draftTitle, action.draftDescription)
+            is TodayAction.NavigateToScheduleItemCreate -> {
+                onNavigateToScheduleItemCreate(
+                    action.kind,
+                    action.draftTitle,
+                    action.draftDescription,
+                    action.draftTimeSlot,
+                )
+            }
+
+            is TodayAction.NavigateToScheduleItemEdit -> {
+                onNavigateToScheduleItemEdit(action.kind, action.itemId)
             }
 
             TodayAction.RequestSmartReschedule -> {
@@ -122,7 +133,7 @@ fun TodayRoute(
 
 sealed interface TodayBottomSheetConfig {
     data object None : TodayBottomSheetConfig
-    data object AddTask : TodayBottomSheetConfig
+    data class AddTask(val defaultDuration: Duration) : TodayBottomSheetConfig
     data class AddEvent(val defaultTimeSlot: TimeSlot) : TodayBottomSheetConfig
 }
 
@@ -166,7 +177,7 @@ fun TodayScreen(
                     modifier = Modifier.padding(
                         end = TodaySpacing.Small, bottom = TodaySpacing.Small
                     ), onAddTaskClick = {
-                        bottomSheetConfig = TodayBottomSheetConfig.AddTask
+                        bottomSheetConfig = TodayBottomSheetConfig.AddTask(uiState.defaultTaskDuration)
                     }, onAddEventClick = {
                         bottomSheetConfig = TodayBottomSheetConfig.AddEvent(
                             uiState.suggestedEventTimeSlot
@@ -199,12 +210,22 @@ fun TodayScreen(
                 onRescheduleClick = { onAction(TodayAction.RequestSmartReschedule) },
                 onTaskCheckedChange = { taskId, _ ->
                     onAction(TodayAction.MarkTaskCompleted(taskId))
-                })
+                },
+                onTaskClick = { task ->
+                    onAction(TodayAction.NavigateToScheduleItemEdit(ScheduleItemKind.TASK, task.id))
+                },
+                onEventClick = { event ->
+                    onAction(TodayAction.NavigateToScheduleItemEdit(ScheduleItemKind.EVENT, event.id))
+                },
+            )
         }
 
         when (val config = bottomSheetConfig) {
             is TodayBottomSheetConfig.AddTask -> {
-                FastAddTaskBottomSheet(onDismissRequest = {
+                FastAddTaskBottomSheet(
+                    dateLabel = "Today",
+                    durationLabel = formatDuration(config.defaultDuration),
+                    onDismissRequest = {
                     onAction(TodayAction.DismissFastAddRequest)
                     bottomSheetConfig = TodayBottomSheetConfig.None
                 }, onSaveDefaultTask = { title, description ->
@@ -216,8 +237,10 @@ fun TodayScreen(
                     bottomSheetConfig = TodayBottomSheetConfig.None
                 }) { draftTitle, draftDescription ->
                     onAction(
-                        TodayAction.NavigateToTaskDetail(
-                            draftTitle, draftDescription
+                        TodayAction.NavigateToScheduleItemCreate(
+                            kind = ScheduleItemKind.TASK,
+                            draftTitle = draftTitle,
+                            draftDescription = draftDescription,
                         )
                     )
                     bottomSheetConfig = TodayBottomSheetConfig.None
@@ -226,6 +249,7 @@ fun TodayScreen(
 
             is TodayBottomSheetConfig.AddEvent -> {
                 FastAddEventBottomSheet(
+                    dateLabel = "Today",
                     onDismissRequest = {
                         onAction(TodayAction.DismissFastAddRequest)
                         bottomSheetConfig = TodayBottomSheetConfig.None
@@ -241,8 +265,11 @@ fun TodayScreen(
                     }, currentTimeSlot = config.defaultTimeSlot
                 ) { draftTitle, draftDescription ->
                     onAction(
-                        TodayAction.NavigateToTaskDetail(
-                            draftTitle, draftDescription
+                        TodayAction.NavigateToScheduleItemCreate(
+                            kind = ScheduleItemKind.EVENT,
+                            draftTitle = draftTitle,
+                            draftDescription = draftDescription,
+                            draftTimeSlot = config.defaultTimeSlot,
                         )
                     )
                     bottomSheetConfig = TodayBottomSheetConfig.None
@@ -284,6 +311,8 @@ private fun TodayContent(
     modifier: Modifier = Modifier,
     onRescheduleClick: () -> Unit,
     onTaskCheckedChange: (taskId: String, completed: Boolean) -> Unit,
+    onTaskClick: (ScheduledTask) -> Unit,
+    onEventClick: (Event) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier, contentPadding = PaddingValues(bottom = TodaySpacing.ContentBottom)
@@ -303,11 +332,27 @@ private fun TodayContent(
             )
         }
 
+        if (uiState.morningTasks.isEmpty() && uiState.afternoonTasks.isEmpty()) {
+            item(key = "today_empty_state") {
+                TodayEmptyState(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = TodaySpacing.Large,
+                            top = TodaySpacing.ExtraLarge,
+                            end = TodaySpacing.Large,
+                        )
+                )
+            }
+        }
+
         todayScheduleSection(
             title = "Morning",
             iconResId = R.drawable.ic_app_section_morning,
             items = uiState.morningTasks,
             onTaskCheckedChange = onTaskCheckedChange,
+            onTaskClick = onTaskClick,
+            onEventClick = onEventClick,
             sectionTopPadding = TodaySpacing.ExtraLarge
         )
 
@@ -316,8 +361,36 @@ private fun TodayContent(
             iconResId = R.drawable.ic_app_section_afternoon,
             items = uiState.afternoonTasks,
             onTaskCheckedChange = onTaskCheckedChange,
+            onTaskClick = onTaskClick,
+            onEventClick = onEventClick,
             sectionTopPadding = TodaySpacing.ExtraLarge
         )
+    }
+}
+
+@Composable
+private fun TodayEmptyState(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(TodaySpacing.ExtraLarge),
+            verticalArrangement = Arrangement.spacedBy(TodaySpacing.Small),
+        ) {
+            Text(
+                text = "No tasks scheduled for today",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = "Rest, or pick backlog tasks and let Smart Reschedule find a realistic slot.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -395,6 +468,8 @@ private fun LazyListScope.todayScheduleSection(
     @androidx.annotation.DrawableRes iconResId: Int,
     items: List<TimeSlot>,
     onTaskCheckedChange: (taskId: String, completed: Boolean) -> Unit,
+    onTaskClick: (ScheduledTask) -> Unit,
+    onEventClick: (Event) -> Unit,
     sectionTopPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     if (items.isEmpty()) return
@@ -438,6 +513,7 @@ private fun LazyListScope.todayScheduleSection(
             is ScheduledTask -> TodayTaskRow(
                 task = item,
                 onCheckedChange = { completed -> onTaskCheckedChange(item.id, completed) },
+                onClick = { onTaskClick(item) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -448,7 +524,9 @@ private fun LazyListScope.todayScheduleSection(
             )
 
             is Event -> TodayEventRow(
-                event = item, modifier = Modifier
+                event = item,
+                onClick = { onEventClick(item) },
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(
                         start = TodaySpacing.Large,
@@ -462,10 +540,15 @@ private fun LazyListScope.todayScheduleSection(
 }
 
 @Composable
-private fun TodayEventRow(event: Event, modifier: Modifier = Modifier) {
+private fun TodayEventRow(
+    event: Event,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     SmartTaskCard(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        onClick = onClick,
         leadingContent = {
             Icon(
                 modifier = Modifier.padding(8.dp),
@@ -493,9 +576,12 @@ private fun TodayEventRow(event: Event, modifier: Modifier = Modifier) {
 
 @Composable
 private fun TodayTaskRow(
-    task: ScheduledTask, modifier: Modifier = Modifier, onCheckedChange: (Boolean) -> Unit
+    task: ScheduledTask,
+    modifier: Modifier = Modifier,
+    onCheckedChange: (Boolean) -> Unit,
+    onClick: () -> Unit,
 ) {
-    SmartTaskCard(modifier = modifier, trailingContent = {
+    SmartTaskCard(modifier = modifier, onClick = onClick, trailingContent = {
         SmartPriorityChip(
             priority = task.priority, modifier = Modifier.wrapContentWidth()
         )
@@ -633,6 +719,8 @@ private fun TodayTaskSectionPreview() {
                     iconResId = R.drawable.ic_app_section_morning,
                     items = previewTasks().take(2),
                     onTaskCheckedChange = { _, _ -> },
+                    onTaskClick = { _ -> },
+                    onEventClick = { _ -> },
                     sectionTopPadding = TodaySpacing.Large
                 )
             }
@@ -648,6 +736,7 @@ private fun TodayTaskRowPreview() {
             TodayTaskRow(
                 task = previewTasks().first(),
                 onCheckedChange = {},
+                onClick = {},
                 modifier = Modifier.padding(TodaySpacing.Large)
             )
         }

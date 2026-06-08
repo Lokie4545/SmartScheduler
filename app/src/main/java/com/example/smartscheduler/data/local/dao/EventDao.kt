@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface EventDao {
     @Query("""
         SELECT * FROM event
-        WHERE startTime >= :startPeriod AND endTime <= :endPeriod
+        WHERE startTime < :endPeriod AND endTime > :startPeriod
     """)
     fun observeEvents(
         startPeriod: Long,
@@ -20,12 +20,18 @@ interface EventDao {
 
     @Query("""
         SELECT * FROM event
-        WHERE startTime >= :startPeriod AND endTime <= :endPeriod
+        WHERE startTime < :endPeriod AND endTime > :startPeriod
     """)
     fun getEvents(
         startPeriod: Long,
         endPeriod: Long
     ): List<EventEntity>
+
+    @Query("""
+        SELECT * FROM event
+        WHERE id = :eventId
+    """)
+    suspend fun getEventById(eventId: String): EventEntity?
 
     @Upsert
     suspend fun upsertEvent(event: EventEntity)

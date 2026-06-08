@@ -34,7 +34,7 @@ internal fun LocalDateTime.formatSmartTime(): String {
 
 internal fun LocalDate.formatDiffSectionTitle(today: LocalDate): String {
     if (this == today) return "Today"
-    return format(DateTimeFormatter.ofPattern("EEE d", Locale.getDefault()))
+    return format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault()))
 }
 
 internal fun SmartRescheduleChangeUiModel.formatMeta(): String {
@@ -55,7 +55,11 @@ internal fun SmartRescheduleChangeUiModel.formatMeta(): String {
             }
         }
 
-        SmartRescheduleChangeType.DEFERRED,
+        SmartRescheduleChangeType.DEFERRED -> (newStartTime ?: oldStartTime)?.let { start ->
+            val end = (newEndTime ?: oldEndTime)?.formatSmartTime()
+            if (end != null) "${start.formatSmartTime()} - $end" else start.formatSmartTime()
+        }
+
         SmartRescheduleChangeType.UNCHANGED -> oldStartTime?.let { start ->
             val end = oldEndTime?.formatSmartTime()
             if (end != null) "${start.formatSmartTime()} - $end" else start.formatSmartTime()

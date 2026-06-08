@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun FastAddEventBottomSheet(
     modifier: Modifier = Modifier,
+    dateLabel: String,
     onDismissRequest: () -> Unit,
     currentTimeSlot: TimeSlot,
     onSaveDefaultEvent: (title: String, description: String) -> Unit,
@@ -41,7 +42,11 @@ fun FastAddEventBottomSheet(
         titleState = titleState,
         descriptionState = descriptionState
     ) {
-        FastAddEventChipsRow(modifier = Modifier.weight(1f),defaultTimeSlot = currentTimeSlot) {
+        FastAddEventChipsRow(
+            modifier = Modifier.weight(1f),
+            dateLabel = dateLabel,
+            defaultTimeSlot = currentTimeSlot,
+        ) {
             onNavigateToFullscreenTask(
                 titleState.text.toString(),
                 descriptionState.text.toString()
@@ -54,6 +59,7 @@ fun FastAddEventBottomSheet(
 @Composable
 private fun FastAddEventChipsRow(
     modifier: Modifier = Modifier,
+    dateLabel: String,
     defaultTimeSlot: TimeSlot,
     onChipClick: () -> Unit,
 ) {
@@ -73,7 +79,7 @@ private fun FastAddEventChipsRow(
                 )
             },
             label = {
-                Text("Today", style = MaterialTheme.typography.labelLarge)
+                Text(dateLabel, style = MaterialTheme.typography.labelLarge)
             }
         )
 
@@ -116,6 +122,7 @@ private fun FastAddMiniEventContentPreview() {
             chipsContent = {
                 FastAddEventChipsRow(
                     modifier = Modifier.weight(1f),
+                    dateLabel = "Today",
                     defaultTimeSlot = PreviewTimeSlot(
                         startTime = date.atTime(14, 0),
                         endTime = date.atTime(14, 30)

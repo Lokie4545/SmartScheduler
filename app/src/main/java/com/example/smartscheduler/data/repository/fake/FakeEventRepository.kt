@@ -20,7 +20,7 @@ class FakeEventRepository(
         endTime: LocalDateTime
     ): Flow<List<Event>> {
         return eventsFlow.map { events ->
-            events.filter { it.startTime >= startTime && it.endTime <= endTime }
+            events.filter { it.overlaps(startTime, endTime) }
         }
     }
 
@@ -28,7 +28,11 @@ class FakeEventRepository(
         startTime: LocalDateTime,
         endTime: LocalDateTime
     ): List<Event> {
-        return eventsFlow.value.filter { it.startTime >= startTime && it.endTime <= endTime }
+        return eventsFlow.value.filter { it.overlaps(startTime, endTime) }
+    }
+
+    override suspend fun getEvent(eventId: String): Event? {
+        return eventsFlow.value.firstOrNull { it.id == eventId }
     }
 
     override suspend fun createEvent(event: Event): String {
@@ -40,10 +44,18 @@ class FakeEventRepository(
         return event.id
     }
 
+    override suspend fun updateEvent(event: Event) {
+        createEvent(event)
+    }
+
     override suspend fun deleteEvent(eventId: String) {
         eventsFlow.update { currentEvents ->
             currentEvents.filterNot { it.id == eventId }
         }
+    }
+
+    private fun Event.overlaps(startTime: LocalDateTime, endTime: LocalDateTime): Boolean {
+        return this.startTime < endTime && this.endTime > startTime
     }
 
 }

@@ -37,9 +37,17 @@ class EventRepositoryImpl @Inject constructor(
         ).map (EventEntity::toDomain)
     }
 
+    override suspend fun getEvent(eventId: String): Event? {
+        return eventDao.getEventById(eventId)?.toDomain()
+    }
+
     override suspend fun createEvent(event: Event): String {
         eventDao.upsertEvent(event.toEntity())
         return event.id
+    }
+
+    override suspend fun updateEvent(event: Event) {
+        eventDao.upsertEvent(event.toEntity())
     }
 
     override suspend fun deleteEvent(eventId: String) {

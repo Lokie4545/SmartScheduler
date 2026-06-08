@@ -29,6 +29,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -169,10 +170,14 @@ private fun SmartReschedulePreviewSuccess(
     modifier: Modifier = Modifier,
 ) {
     val candidates = uiState.backlogCandidates
-    val expiredCandidates = candidates.filter { candidate ->
-        candidate.deadline?.toLocalDate()?.isBefore(uiState.currentDate) == true
+    val expiredCandidates = remember(candidates, uiState.currentDate) {
+        candidates.filter { candidate ->
+            candidate.deadline?.toLocalDate()?.isBefore(uiState.currentDate) == true
+        }
     }
-    val waitingCandidates = candidates - expiredCandidates.toSet()
+    val waitingCandidates = remember(candidates, expiredCandidates) {
+        candidates - expiredCandidates.toSet()
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(

@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -134,8 +135,19 @@ private fun SmartRescheduleDiffContent(
     onAction: (SmartRescheduleAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val todayChanges = uiState.changes.filter { it.type != SmartRescheduleChangeType.DEFERRED }
-    val deferredChanges = uiState.changes.filter { it.type == SmartRescheduleChangeType.DEFERRED }
+    val todayChanges = remember(uiState.changes) {
+        uiState.changes.filter { it.type != SmartRescheduleChangeType.DEFERRED }
+    }
+    val scheduledDeferredGroups = remember(uiState.changes) {
+        uiState.changes
+            .filter { it.type == SmartRescheduleChangeType.DEFERRED && it.newStartTime != null }
+            .groupBy { checkNotNull(it.newStartTime).toLocalDate() }
+            .entries
+            .sortedBy { it.key }
+    }
+    val unscheduledDeferredChanges = remember(uiState.changes) {
+        uiState.changes.filter { it.type == SmartRescheduleChangeType.DEFERRED && it.newStartTime == null }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -165,7 +177,7 @@ private fun SmartRescheduleDiffContent(
             }
             items(
                 items = todayChanges,
-                key = { change -> "today_${change.taskId}_${change.type}_${change.isRejected}" },
+                key = { change -> "today_${change.taskId}_${change.type}" },
             ) { change ->
                 SmartRescheduleChangeCard(
                     change = change,
@@ -175,16 +187,35 @@ private fun SmartRescheduleDiffContent(
             }
         }
 
-        if (deferredChanges.isNotEmpty()) {
-            item(key = "deferred_section") {
+        scheduledDeferredGroups.forEach { (date, changes) ->
+            item(key = "deferred_section_$date") {
                 SmartRescheduleSectionHeader(
-                    title = uiState.currentDate.plusDays(1).formatDiffSectionTitle(uiState.currentDate),
+                    title = date.formatDiffSectionTitle(uiState.currentDate),
                     iconResId = R.drawable.ic_app_sun,
                 )
             }
             items(
-                items = deferredChanges,
-                key = { change -> "deferred_${change.taskId}_${change.type}_${change.isRejected}" },
+                items = changes,
+                key = { change -> "deferred_${change.taskId}_${change.type}" },
+            ) { change ->
+                SmartRescheduleChangeCard(
+                    change = change,
+                    onReject = { onAction(SmartRescheduleAction.RejectChange(change.taskId)) },
+                    onRestore = { onAction(SmartRescheduleAction.RestoreChange(change.taskId)) },
+                )
+            }
+        }
+
+        if (unscheduledDeferredChanges.isNotEmpty()) {
+            item(key = "deferred_backlog_section") {
+                SmartRescheduleSectionHeader(
+                    title = "Still in backlog",
+                    iconResId = R.drawable.ic_app_circle_minus,
+                )
+            }
+            items(
+                items = unscheduledDeferredChanges,
+                key = { change -> "deferred_backlog_${change.taskId}_${change.type}" },
             ) { change ->
                 SmartRescheduleChangeCard(
                     change = change,
@@ -364,7 +395,7 @@ private fun SmartRescheduleRejectedCard(
             textDecoration = TextDecoration.LineThrough,
         )
         Text(
-            text = if (change.type == SmartRescheduleChangeType.ADDED) {
+            text = if (change.type == SmartRescheduleChangeType.ADDED || change.oldStartTime == null) {
                 "Task returned in backlog"
             } else {
                 "Previous slot restored"

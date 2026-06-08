@@ -28,7 +28,11 @@ private data class PriorityVisuals(
 
 
 @Composable
-fun SmartPriorityChip(priority: Priority, modifier: Modifier = Modifier) {
+fun SmartPriorityChip(
+    priority: Priority,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
     val (text, containerColor, contentColor, iconId) = when (priority) {
         Priority.HIGH -> PriorityVisuals(
             text = "High",
@@ -54,9 +58,12 @@ fun SmartPriorityChip(priority: Priority, modifier: Modifier = Modifier) {
 
     SuggestionChip(
         modifier = modifier,
-        onClick = {},
-        enabled = false,
+        onClick = onClick ?: {},
+        enabled = onClick != null,
         colors = SuggestionChipDefaults.suggestionChipColors(
+            containerColor = containerColor,
+            labelColor = contentColor,
+            iconContentColor = contentColor,
             disabledContainerColor = containerColor,
             disabledLabelColor = contentColor,
             disabledIconContentColor = contentColor

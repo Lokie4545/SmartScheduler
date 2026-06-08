@@ -21,6 +21,7 @@ sealed interface TodayUiState {
         val afternoonTasks: List<TimeSlot>,
         val unscheduledTaskCount: Int,
         val unscheduledDuration: Duration,
+        val defaultTaskDuration: Duration,
         val suggestedEventTimeSlot: TimeSlot
     ) : TodayUiState
 }

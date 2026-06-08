@@ -10,6 +10,7 @@ import com.example.smartscheduler.domain.model.Status
 import com.example.smartscheduler.domain.model.TimeSlot
 import com.example.smartscheduler.domain.model.UnscheduledTask
 import com.example.smartscheduler.domain.repository.EventRepository
+import com.example.smartscheduler.domain.repository.SettingsRepository
 import com.example.smartscheduler.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -32,24 +32,25 @@ import javax.inject.Inject
 class TodayViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val eventRepository: EventRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
-    private val taskTodayFlow = taskRepository.getDayTasksStream(LocalDate.now())
+    private val currentDate = LocalDate.now()
+    private val taskTodayFlow = taskRepository.getDayTasksStream(currentDate)
     private val taskUnallocatedFlow = taskRepository.getUnallocatedTasksStream()
     private val eventsTodayFlow = eventRepository.observeEvents(
-        startTime = LocalDate.now().atStartOfDay(),
-        endTime = LocalDate.now().plusDays(1).atStartOfDay()
+        startTime = currentDate.atStartOfDay(),
+        endTime = currentDate.plusDays(1).atStartOfDay()
     )
 
     val uiState: StateFlow<TodayUiState> =
         combine(
             taskTodayFlow,
             taskUnallocatedFlow,
-            eventsTodayFlow
+            eventsTodayFlow,
+            settingsRepository.settingsStream,
 
-        ) { tasks, unscheduledTasks, events ->
-            val currentDate = LocalDate.now()
-
+        ) { tasks, unscheduledTasks, events, settings ->
             val unscheduledDuration = unscheduledTasks
                 .mapNotNull { it.duration }
                 .fold(Duration.ZERO, Duration::plus)
@@ -65,7 +66,10 @@ class TodayViewModel @Inject constructor(
                 currentDate = currentDate,
                 unscheduledTaskCount = unscheduledTasks.size,
                 unscheduledDuration = unscheduledDuration,
-                suggestedEventTimeSlot = LocalDateTime.now().toDefaultEventSlot(),
+                defaultTaskDuration = settings.defaultTaskDuration,
+                suggestedEventTimeSlot = LocalDateTime.now().toDefaultEventSlot(
+                    durationMinutes = settings.defaultEventDuration.toMinutes(),
+                ),
                 morningTasks = morning,
                 afternoonTasks = afternoon
             )
@@ -74,7 +78,7 @@ class TodayViewModel @Inject constructor(
             .catch { ex ->
                 emit(
                     TodayUiState.Error(
-                        currentDate = LocalDate.now(),
+                        currentDate = currentDate,
                         message = ex.message ?: "Unknown Error"
                     )
                 )
@@ -82,7 +86,7 @@ class TodayViewModel @Inject constructor(
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = TodayUiState.Loading(LocalDate.now())
+                initialValue = TodayUiState.Loading(currentDate)
             )
 
     fun handleAction(action: TodayAction) {
@@ -117,6 +121,7 @@ class TodayViewModel @Inject constructor(
 
     private fun addQuickTask(title: String, description: String) {
         viewModelScope.launch {
+            val settings = settingsRepository.settingsStream.first()
             val newTask = UnscheduledTask(
                 id = UUID.randomUUID().toString(),
                 name = title,
@@ -126,7 +131,7 @@ class TodayViewModel @Inject constructor(
                 isLocked = false,
                 deadline = null,
                 preferredPlaceTime = null,
-                duration = Duration.ofMinutes(30),
+                duration = settings.defaultTaskDuration,
             )
             taskRepository.createTask(newTask)
         }

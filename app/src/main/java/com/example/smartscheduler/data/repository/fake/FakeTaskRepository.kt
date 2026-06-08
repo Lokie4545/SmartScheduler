@@ -21,12 +21,16 @@ class FakeTaskRepository(
         return tasksFlow.value.filterIsInstance<UnscheduledTask>()
     }
 
+    override suspend fun getTask(taskId: String): Task? {
+        return tasksFlow.value.firstOrNull { it.id == taskId }
+    }
+
     override suspend fun getTasks(
         startTime: LocalDateTime,
         endTime: LocalDateTime
     ): List<Task> {
         return tasksFlow.value.filterIsInstance<ScheduledTask>()
-            .filter { it.startTime >= startTime && it.endTime <= endTime }
+            .filter { it.overlaps(startTime, endTime) }
     }
 
     override suspend fun applyReschedule(tasks: List<Task>) {
@@ -61,7 +65,14 @@ class FakeTaskRepository(
         val endTime = date.plusDays(1).atStartOfDay()
         return tasksFlow.map { tasks ->
             tasks.filterIsInstance<ScheduledTask>()
-                .filter { it.startTime in startTime..<endTime }
+                .filter { it.overlaps(startTime, endTime) }
+        }
+    }
+
+    override fun observeTasks(startTime: LocalDateTime, endTime: LocalDateTime): Flow<List<Task>> {
+        return tasksFlow.map { tasks ->
+            tasks.filterIsInstance<ScheduledTask>()
+                .filter { it.overlaps(startTime, endTime) }
         }
     }
 
@@ -69,5 +80,9 @@ class FakeTaskRepository(
         return tasksFlow.map { tasks ->
             tasks.filterIsInstance<UnscheduledTask>()
         }
+    }
+
+    private fun ScheduledTask.overlaps(startTime: LocalDateTime, endTime: LocalDateTime): Boolean {
+        return this.startTime < endTime && this.endTime > startTime
     }
 }

@@ -21,6 +21,10 @@ class TaskRepositoryImpl @Inject constructor(
             .filterIsInstance<UnscheduledTask>()
     }
 
+    override suspend fun getTask(taskId: String): Task? {
+        return taskDao.getTaskById(taskId)?.toDomain()
+    }
+
     override suspend fun getTasks(
         startTime: LocalDateTime,
         endTime: LocalDateTime
@@ -56,12 +60,18 @@ class TaskRepositoryImpl @Inject constructor(
             date
                 .plusDays(1)
                 .atStartOfDay()
-                .minusNanos(1)
                 .toInstant(ZoneOffset.UTC)
                 .toEpochMilli()
         return taskDao.observeTasks(
             startTime,
             endTime
+        ).map { it.map { entity -> entity.toDomain() } }
+    }
+
+    override fun observeTasks(startTime: LocalDateTime, endTime: LocalDateTime): Flow<List<Task>> {
+        return taskDao.observeTasks(
+            startTime.toInstant(ZoneOffset.UTC).toEpochMilli(),
+            endTime.toInstant(ZoneOffset.UTC).toEpochMilli(),
         ).map { it.map { entity -> entity.toDomain() } }
     }
 

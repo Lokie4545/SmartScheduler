@@ -22,6 +22,8 @@ import com.example.smartscheduler.ui.theme.SmartSchedulerTheme
 @Composable
 fun FastAddTaskBottomSheet(
     modifier: Modifier = Modifier,
+    dateLabel: String,
+    durationLabel: String,
     onDismissRequest: () -> Unit,
     onSaveDefaultTask: (title: String, description: String) -> Unit,
     onNavigateToFullscreenTask: (draftTitle: String, draftDescription: String) -> Unit
@@ -35,7 +37,11 @@ fun FastAddTaskBottomSheet(
         titleState = titleState,
         descriptionState = descriptionState
     ) {
-        FastAddTaskChipsRow(modifier = Modifier.weight(1f)) {
+        FastAddTaskChipsRow(
+            dateLabel = dateLabel,
+            durationLabel = durationLabel,
+            modifier = Modifier.weight(1f),
+        ) {
             onNavigateToFullscreenTask(
                 titleState.text.toString(),
                 descriptionState.text.toString()
@@ -46,7 +52,12 @@ fun FastAddTaskBottomSheet(
 
 
 @Composable
-private fun FastAddTaskChipsRow(modifier: Modifier = Modifier, onChipClick: () -> Unit) {
+private fun FastAddTaskChipsRow(
+    dateLabel: String,
+    durationLabel: String,
+    modifier: Modifier = Modifier,
+    onChipClick: () -> Unit,
+) {
     val scrollState = rememberScrollState()
 
     Row(
@@ -63,7 +74,7 @@ private fun FastAddTaskChipsRow(modifier: Modifier = Modifier, onChipClick: () -
                 )
             },
             label = {
-                Text("Today", style = MaterialTheme.typography.labelLarge)
+                Text(dateLabel, style = MaterialTheme.typography.labelLarge)
             }
         )
 
@@ -77,7 +88,7 @@ private fun FastAddTaskChipsRow(modifier: Modifier = Modifier, onChipClick: () -
                 )
             },
             label = {
-                Text("30 min", style = MaterialTheme.typography.labelLarge)
+                Text(durationLabel, style = MaterialTheme.typography.labelLarge)
             }
         )
 
@@ -107,10 +118,14 @@ private fun FastAddMiniTaskContentPreview() {
                 descriptionState = rememberTextFieldState(),
                 onSaveDefault = { _, _ -> },
                 chipsContent = {
-                    FastAddTaskChipsRow(modifier = Modifier.weight(1f), onChipClick = {})
+                    FastAddTaskChipsRow(
+                        dateLabel = "Today",
+                        durationLabel = "30 min",
+                        modifier = Modifier.weight(1f),
+                        onChipClick = {},
+                    )
                 }
             )
         }
     }
 }
-

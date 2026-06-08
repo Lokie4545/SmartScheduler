@@ -5,11 +5,12 @@ import com.example.smartscheduler.domain.model.UnscheduledTask
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.Period
 
 interface TaskRepository {
 
     suspend fun getUnallocatedTasks(): List<UnscheduledTask>
+
+    suspend fun getTask(taskId: String): Task?
 
     suspend fun getTasks(startTime: LocalDateTime, endTime: LocalDateTime): List<Task>
 
@@ -22,6 +23,8 @@ interface TaskRepository {
     suspend fun updateTask(task: Task)
 
     fun getDayTasksStream(date: LocalDate): Flow<List<Task>>
+
+    fun observeTasks(startTime: LocalDateTime, endTime: LocalDateTime): Flow<List<Task>>
 
     fun getUnallocatedTasksStream(): Flow<List<UnscheduledTask>>
 

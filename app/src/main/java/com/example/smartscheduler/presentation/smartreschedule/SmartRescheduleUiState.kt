@@ -76,5 +76,5 @@ data class SmartRescheduleChangeUiModel(
     val reason: String,
     val isRejected: Boolean,
 ) {
-    val returnsToBacklog: Boolean = isRejected || type == SmartRescheduleChangeType.DEFERRED
+    val returnsToBacklog: Boolean = isRejected || (type == SmartRescheduleChangeType.DEFERRED && newStartTime == null)
 }

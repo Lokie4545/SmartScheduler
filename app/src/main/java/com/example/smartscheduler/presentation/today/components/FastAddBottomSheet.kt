@@ -22,6 +22,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -78,6 +80,10 @@ fun FastAddBottomSheetContent(
     chipsContent: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val canSave = remember(titleState) {
+        derivedStateOf { titleState.text.isNotBlank() }
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -117,11 +123,13 @@ fun FastAddBottomSheetContent(
 
             FastAddSaveButton(
                 onClick = {
+                    if (!canSave.value) return@FastAddSaveButton
                     onSaveDefault(
-                        titleState.text.toString(),
-                        descriptionState.text.toString()
+                        titleState.text.toString().trim(),
+                        descriptionState.text.toString().trim()
                     )
-                }
+                },
+                enabled = canSave.value,
             )
         }
     }
@@ -130,10 +138,12 @@ fun FastAddBottomSheetContent(
 @Composable
 private fun FastAddSaveButton(
     onClick: () -> Unit,
+    enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     FilledIconButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.size(48.dp),
         colors = IconButtonDefaults.filledIconButtonColors(
             containerColor = MaterialTheme.colorScheme.primary,
@@ -143,7 +153,7 @@ private fun FastAddSaveButton(
     ) {
         Icon(
             painterResource(R.drawable.ic_app_check_small),
-            contentDescription = null
+            contentDescription = "Save quick add"
         )
     }
 }

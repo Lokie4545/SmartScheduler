@@ -2,6 +2,7 @@ package com.example.smartscheduler.presentation.smartreschedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartscheduler.domain.model.AppSettings
 import com.example.smartscheduler.domain.model.DiffItem
 import com.example.smartscheduler.domain.model.Event
 import com.example.smartscheduler.domain.model.ReschedulePreview
@@ -9,6 +10,7 @@ import com.example.smartscheduler.domain.model.ScheduledTask
 import com.example.smartscheduler.domain.model.Task
 import com.example.smartscheduler.domain.model.UnscheduledTask
 import com.example.smartscheduler.domain.repository.EventRepository
+import com.example.smartscheduler.domain.repository.SettingsRepository
 import com.example.smartscheduler.domain.repository.TaskRepository
 import com.example.smartscheduler.domain.usecase.ApplyRescheduleUseCase
 import com.example.smartscheduler.domain.usecase.PreviewRescheduleDayUseCase
@@ -26,13 +28,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltViewModel
 class SmartRescheduleViewModel @Inject constructor(
     taskRepository: TaskRepository,
     eventRepository: EventRepository,
+    settingsRepository: SettingsRepository,
     private val previewRescheduleDayUseCase: PreviewRescheduleDayUseCase,
     private val applyRescheduleUseCase: ApplyRescheduleUseCase,
 ) : ViewModel() {
@@ -51,12 +53,14 @@ class SmartRescheduleViewModel @Inject constructor(
         taskRepository.getDayTasksStream(currentDate),
         taskRepository.getUnallocatedTasksStream(),
         eventRepository.observeEvents(startOfDay, endOfDay),
+        settingsRepository.settingsStream,
         retryRequests,
-    ) { dayTasks, backlog, events, _ ->
+    ) { dayTasks, backlog, events, settings, _ ->
         PlanningInputs(
             dayTasks = dayTasks,
             backlog = backlog,
             events = events,
+            settings = settings,
         )
     }
 
@@ -125,11 +129,19 @@ class SmartRescheduleViewModel @Inject constructor(
 
         val selectedBacklog = inputs.backlog.filterSelectedForSmartReschedule(deselectedBacklogTaskIds)
 
+        if (!inputs.settings.isValidWorkday) {
+            currentPreview = null
+            return SmartRescheduleUiState.Error(
+                currentDate = currentDate,
+                message = "Workday start must be before workday end",
+            )
+        }
+
         return try {
             when (val result = previewRescheduleDayUseCase.fromSnapshot(
                 date = currentDate,
-                workDayStart = WorkDayStart,
-                workDayEnd = WorkDayEnd,
+                workDayStart = inputs.settings.workDayStart,
+                workDayEnd = inputs.settings.workDayEnd,
                 tasksOnToday = inputs.dayTasks,
                 eventsOnToday = inputs.events,
                 backlog = selectedBacklog,
@@ -276,6 +288,7 @@ class SmartRescheduleViewModel @Inject constructor(
             is DiffItem.Added -> SmartRescheduleChangeType.ADDED
             is DiffItem.Moved -> SmartRescheduleChangeType.MOVED
             is DiffItem.Evicted -> SmartRescheduleChangeType.DEFERRED
+            is DiffItem.Deferred -> SmartRescheduleChangeType.DEFERRED
             is DiffItem.Unchanged -> SmartRescheduleChangeType.UNCHANGED
         }
 
@@ -286,11 +299,24 @@ class SmartRescheduleViewModel @Inject constructor(
             priority = sourceTask?.priority,
             duration = proposedTask?.duration ?: oldTask?.duration ?: backlogTask?.duration ?: unallocatedTask?.duration,
             deadline = sourceTask?.deadline,
-            oldStartTime = oldTask?.startTime,
+            oldStartTime = when (this) {
+                is DiffItem.Deferred -> oldStartTime
+                else -> oldTask?.startTime
+            },
             oldEndTime = oldTask?.endTime,
-            newStartTime = proposedTask?.startTime,
-            newEndTime = proposedTask?.endTime,
-            reason = buildReason(changeType, sourceTask?.deadline),
+            newStartTime = when (this) {
+                is DiffItem.Deferred -> newStartTime
+                else -> proposedTask?.startTime
+            },
+            newEndTime = when (this) {
+                is DiffItem.Deferred -> newEndTime
+                else -> proposedTask?.endTime
+            },
+            reason = when (this) {
+                is DiffItem.Deferred -> "Placed in the nearest free future slot"
+                is DiffItem.Evicted -> "Doesn't fit in working hours"
+                else -> buildReason(changeType, sourceTask?.deadline)
+            },
             isRejected = taskId in rejectedTaskIds,
         )
     }
@@ -305,19 +331,15 @@ class SmartRescheduleViewModel @Inject constructor(
             }
 
             SmartRescheduleChangeType.MOVED -> "Freeing up a higher-priority slot"
-            SmartRescheduleChangeType.DEFERRED -> "Doesn't fit in working hours"
+            SmartRescheduleChangeType.DEFERRED -> "Placed in the nearest free future slot"
             SmartRescheduleChangeType.UNCHANGED -> "Already fits the proposed schedule"
         }
-    }
-
-    private companion object {
-        val WorkDayStart: LocalTime = LocalTime.of(9, 0)
-        val WorkDayEnd: LocalTime = LocalTime.of(18, 0)
     }
 
     private data class PlanningInputs(
         val dayTasks: List<Task>,
         val backlog: List<UnscheduledTask>,
         val events: List<Event>,
+        val settings: AppSettings,
     )
 }

@@ -2,10 +2,7 @@ package com.example.smartscheduler.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Query
-import androidx.room.Transaction
-import androidx.room.Update
 import androidx.room.Upsert
-import com.example.smartscheduler.data.local.EventEntity
 import com.example.smartscheduler.data.local.TaskEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -15,7 +12,10 @@ interface TaskDao {
 
     @Query("""
         SELECT * FROM task
-        WHERE startTime >= :startPeriod AND endTime <= :endPeriod
+        WHERE startTime IS NOT NULL
+            AND endTime IS NOT NULL
+            AND startTime < :endPeriod
+            AND endTime > :startPeriod
     """)
     fun observeTasks(
         startPeriod: Long,
@@ -33,7 +33,10 @@ interface TaskDao {
 
     @Query("""
         SELECT * FROM task
-        WHERE startTime >= :startPeriod AND endTime <= :endPeriod
+        WHERE startTime IS NOT NULL
+            AND endTime IS NOT NULL
+            AND startTime < :endPeriod
+            AND endTime > :startPeriod
     """)
     suspend fun getTasks(startPeriod: Long, endPeriod: Long): List<TaskEntity>
 

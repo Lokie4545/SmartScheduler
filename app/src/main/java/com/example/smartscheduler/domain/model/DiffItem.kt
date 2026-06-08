@@ -24,6 +24,14 @@ sealed interface DiffItem {
         override val taskName: String,
     ) : DiffItem
 
+    data class Deferred(
+        override val taskId: String,
+        override val taskName: String,
+        val oldStartTime: LocalDateTime?,
+        val newStartTime: LocalDateTime,
+        val newEndTime: LocalDateTime,
+    ) : DiffItem
+
     data class Unchanged(
         override val taskId: String,
         override val taskName: String

@@ -1,6 +1,7 @@
 package com.example.smartscheduler.presentation.today
 
 import com.example.smartscheduler.domain.model.TimeSlot
+import com.example.smartscheduler.presentation.scheduleitemdetail.ScheduleItemKind
 
 sealed interface TodayAction {
     data class MarkTaskCompleted(val taskId: String) : TodayAction
@@ -9,5 +10,15 @@ sealed interface TodayAction {
     data object RequestSmartReschedule : TodayAction
     data object DismissFastAddRequest: TodayAction
 
-    data class NavigateToTaskDetail(val draftTitle: String, val draftDescription: String) : TodayAction
+    data class NavigateToScheduleItemCreate(
+        val kind: ScheduleItemKind,
+        val draftTitle: String,
+        val draftDescription: String,
+        val draftTimeSlot: TimeSlot? = null,
+    ) : TodayAction
+
+    data class NavigateToScheduleItemEdit(
+        val kind: ScheduleItemKind,
+        val itemId: String,
+    ) : TodayAction
 }
